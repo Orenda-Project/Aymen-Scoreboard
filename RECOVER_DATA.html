@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Recovery Tool</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 40px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 16px;
+            margin-bottom: 30px;
+        }
+
+        .status {
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            font-size: 14px;
+            line-height: 1.6;
+        }
+
+        .status.info {
+            background: #e6f7ff;
+            border-left: 4px solid #1890ff;
+            color: #0050b3;
+        }
+
+        .status.success {
+            background: #f6ffed;
+            border-left: 4px solid #52c41a;
+            color: #389e0d;
+        }
+
+        .status.error {
+            background: #fff2e8;
+            border-left: 4px solid #ff4d4f;
+            color: #cf1322;
+        }
+
+        .status.warning {
+            background: #fffbe6;
+            border-left: 4px solid #faad14;
+            color: #ad6800;
+        }
+
+        button {
+            background: #1890ff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            margin-right: 10px;
+            margin-bottom: 10px;
+            transition: all 0.3s;
+        }
+
+        button:hover {
+            background: #40a9ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(24,144,255,0.4);
+        }
+
+        button.secondary {
+            background: #52c41a;
+        }
+
+        button.secondary:hover {
+            background: #73d13d;
+        }
+
+        button.danger {
+            background: #ff4d4f;
+        }
+
+        button.danger:hover {
+            background: #ff7875;
+        }
+
+        .data-preview {
+            background: #f5f5f5;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            max-height: 400px;
+            overflow: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            line-height: 1.6;
+        }
+
+        .step {
+            background: #fafafa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            border-left: 3px solid #1890ff;
+        }
+
+        .step-number {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            background: #1890ff;
+            color: white;
+            border-radius: 50%;
+            text-align: center;
+            line-height: 30px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 Data Recovery Tool</h1>
+        <p class="subtitle">Recover your recruitment scoreboard data</p>
+
+        <div id="status" class="status info">
+            <strong>ℹ️ Ready to scan for data</strong><br>
+            Click "Scan for Data" to check your browser storage.
+        </div>
+
+        <div style="margin: 20px 0;">
+            <button onclick="scanData()">🔍 Scan for Data</button>
+            <button onclick="forceRecover()" class="secondary">💾 Force Recovery</button>
+            <button onclick="downloadBackup()" class="secondary">📥 Download Backup</button>
+            <button onclick="viewRawData()">👁️ View Raw Data</button>
+        </div>
+
+        <div id="dataPreview" class="data-preview" style="display: none;"></div>
+
+        <div id="instructions" style="display: none;">
+            <h2 style="margin: 30px 0 20px 0;">📋 Recovery Steps</h2>
+
+            <div class="step">
+                <span class="step-number">1</span>
+                <strong>Data Found!</strong><br>
+                Your old data has been detected in browser storage.
+            </div>
+
+            <div class="step">
+                <span class="step-number">2</span>
+                <strong>Click "Force Recovery"</strong><br>
+                This will migrate your data to the new format.
+            </div>
+
+            <div class="step">
+                <span class="step-number">3</span>
+                <strong>Open DEMO.html</strong><br>
+                After recovery, open DEMO.html to see your data.
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const OLD_KEY = 'recruitment_scoreboard_data';
+        const NEW_KEY = 'recruitment_scoreboard_workspaces';
+        let foundData = null;
+
+        function scanData() {
+            updateStatus('info', 'ℹ️ Scanning...', 'Checking browser storage for data...');
+
+            // Check for old data
+            const oldData = localStorage.getItem(OLD_KEY);
+            const newData = localStorage.getItem(NEW_KEY);
+
+            let message = '';
+            let positions = 0;
+            let candidates = 0;
+
+            if (oldData) {
+                try {
+                    const data = JSON.parse(oldData);
+                    foundData = data;
+                    positions = data.positions?.length || 0;
+                    candidates = data.positions?.reduce((sum, p) => sum + (p.candidates?.length || 0), 0) || 0;
+
+                    message = `
+                        <strong>✅ OLD DATA FOUND!</strong><br><br>
+                        📊 Statistics:<br>
+                        - Positions: ${positions}<br>
+                        - Candidates: ${candidates}<br>
+                        - Data size: ${(oldData.length / 1024).toFixed(2)} KB<br>
+                        - Last saved: ${data.timestamp || 'Unknown'}<br><br>
+                        <strong>👉 Click "Force Recovery" to restore this data!</strong>
+                    `;
+
+                    updateStatus('success', '✅ Data Found!', message);
+                    document.getElementById('instructions').style.display = 'block';
+                } catch (error) {
+                    updateStatus('error', '❌ Error', 'Old data exists but is corrupted. Try "Download Backup" to save what we can.');
+                }
+            } else if (newData) {
+                try {
+                    const data = JSON.parse(newData);
+                    const workspaces = data.workspaces || [];
+                    positions = workspaces.reduce((sum, w) => sum + (w.positions?.length || 0), 0);
+                    candidates = workspaces.reduce((sum, w) =>
+                        sum + w.positions?.reduce((pSum, p) => pSum + (p.candidates?.length || 0), 0) || 0, 0);
+
+                    message = `
+                        <strong>ℹ️ Already Migrated</strong><br><br>
+                        Your data is already in the new format:<br>
+                        - Workspaces: ${workspaces.length}<br>
+                        - Positions: ${positions}<br>
+                        - Candidates: ${candidates}<br><br>
+                        <strong>Open DEMO.html to see your data!</strong><br><br>
+                        If you still don't see data, try refreshing with Ctrl+F5.
+                    `;
+
+                    updateStatus('info', 'ℹ️ Data Already Migrated', message);
+                } catch (error) {
+                    updateStatus('error', '❌ Error', 'New data exists but is corrupted.');
+                }
+            } else {
+                updateStatus('warning', '⚠️ No Data Found',
+                    'No data found in browser storage.<br><br>' +
+                    'This could mean:<br>' +
+                    '- Data was cleared<br>' +
+                    '- You\'re using a different browser<br>' +
+                    '- You\'re in incognito mode<br>' +
+                    '- This is the first time running the app<br><br>' +
+                    'If you have a backup file (.json), import it in DEMO.html using "Import Backup".'
+                );
+            }
+        }
+
+        function forceRecover() {
+            if (!foundData) {
+                alert('No data to recover! Click "Scan for Data" first.');
+                return;
+            }
+
+            try {
+                // Create workspace from old data
+                const workspace = {
+                    id: 1,
+                    name: 'Recruitment Scoreboard',
+                    description: 'Recovered data from previous session',
+                    icon: '👥',
+                    color: '#1890ff',
+                    positions: foundData.positions || [],
+                    nextPositionId: foundData.nextPositionId || (foundData.positions?.length || 0) + 1,
+                    createdAt: new Date().toISOString()
+                };
+
+                const newData = {
+                    workspaces: [workspace],
+                    nextWorkspaceId: 2,
+                    currentWorkspaceId: 1,
+                    timestamp: new Date().toISOString()
+                };
+
+                // Save to new format
+                localStorage.setItem(NEW_KEY, JSON.stringify(newData));
+
+                // Backup old data
+                localStorage.setItem(OLD_KEY + '_backup', localStorage.getItem(OLD_KEY));
+
+                const positions = foundData.positions?.length || 0;
+                const candidates = foundData.positions?.reduce((sum, p) => sum + (p.candidates?.length || 0), 0) || 0;
+
+                updateStatus('success', '✅ Recovery Complete!',
+                    `<strong>Successfully recovered your data!</strong><br><br>` +
+                    `📊 Recovered:<br>` +
+                    `- ${positions} position(s)<br>` +
+                    `- ${candidates} candidate(s)<br><br>` +
+                    `<strong>🎉 Next Step:</strong><br>` +
+                    `Open DEMO.html and you should see your data!<br><br>` +
+                    `A backup has been saved to: ${OLD_KEY}_backup`
+                );
+
+                document.getElementById('instructions').style.display = 'none';
+            } catch (error) {
+                updateStatus('error', '❌ Recovery Failed',
+                    `Error during recovery: ${error.message}<br><br>` +
+                    `Try "Download Backup" to save your data, then import it manually.`
+                );
+            }
+        }
+
+        function downloadBackup() {
+            const oldData = localStorage.getItem(OLD_KEY);
+            const newData = localStorage.getItem(NEW_KEY);
+
+            let dataToBackup = null;
+            let filename = 'recovery_backup_' + new Date().toISOString().slice(0,10) + '.json';
+
+            if (newData) {
+                dataToBackup = newData;
+                filename = 'workspace_backup_' + new Date().toISOString().slice(0,10) + '.json';
+            } else if (oldData) {
+                dataToBackup = oldData;
+                filename = 'old_format_backup_' + new Date().toISOString().slice(0,10) + '.json';
+            }
+
+            if (!dataToBackup) {
+                alert('No data to backup!');
+                return;
+            }
+
+            const blob = new Blob([dataToBackup], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            updateStatus('success', '✅ Backup Downloaded!',
+                `Backup saved as: ${filename}<br><br>` +
+                `Keep this file safe! You can import it later using "Import Backup" in DEMO.html.`
+            );
+        }
+
+        function viewRawData() {
+            const preview = document.getElementById('dataPreview');
+            const oldData = localStorage.getItem(OLD_KEY);
+            const newData = localStorage.getItem(NEW_KEY);
+
+            let content = '<strong>📦 Browser LocalStorage Contents:</strong><br><br>';
+
+            if (oldData) {
+                try {
+                    const data = JSON.parse(oldData);
+                    content += '<strong style="color: #52c41a;">OLD FORMAT DATA:</strong><br>';
+                    content += JSON.stringify(data, null, 2);
+                    content += '<br><br>';
+                } catch (e) {
+                    content += '<strong style="color: #ff4d4f;">OLD DATA (Corrupted):</strong><br>';
+                    content += oldData.substring(0, 500) + '...<br><br>';
+                }
+            }
+
+            if (newData) {
+                try {
+                    const data = JSON.parse(newData);
+                    content += '<strong style="color: #1890ff;">NEW FORMAT DATA:</strong><br>';
+                    content += JSON.stringify(data, null, 2);
+                } catch (e) {
+                    content += '<strong style="color: #ff4d4f;">NEW DATA (Corrupted):</strong><br>';
+                    content += newData.substring(0, 500) + '...';
+                }
+            }
+
+            if (!oldData && !newData) {
+                content += '<em style="color: #999;">No data found in localStorage</em>';
+            }
+
+            preview.innerHTML = content;
+            preview.style.display = 'block';
+        }
+
+        function updateStatus(type, title, message) {
+            const statusDiv = document.getElementById('status');
+            statusDiv.className = 'status ' + type;
+            statusDiv.innerHTML = `<strong>${title}</strong><br>${message}`;
+        }
+
+        // Auto-scan on load
+        window.onload = function() {
+            setTimeout(scanData, 500);
+        };
+    </script>
+</body>
+</html>

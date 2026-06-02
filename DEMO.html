@@ -1,0 +1,4668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recruitment Scoreboard - Multi-Position Demo</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        .header {
+            background: #001529;
+            color: white;
+            padding: 16px 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+
+        /* App Layout with Sidebar */
+        .app-layout {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+        }
+
+        /* Sidebar Styles */
+        .sidebar {
+            width: 280px;
+            background: #1a1d29;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            border-right: 1px solid rgba(255,255,255,0.1);
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .sidebar-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.85);
+            margin-bottom: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .workspace-list {
+            flex: 1;
+            padding: 12px;
+        }
+
+        .workspace-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 16px;
+            margin-bottom: 4px;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: transparent;
+        }
+
+        .workspace-item:hover {
+            background: rgba(255,255,255,0.08);
+        }
+
+        .workspace-item.active {
+            background: #1890ff;
+        }
+
+        .workspace-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .workspace-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .workspace-name {
+            font-size: 14px;
+            font-weight: 500;
+            color: white;
+            margin-bottom: 2px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .workspace-meta {
+            font-size: 12px;
+            color: rgba(255,255,255,0.5);
+        }
+
+        .workspace-actions {
+            display: none;
+            gap: 4px;
+        }
+
+        .workspace-item:hover .workspace-actions {
+            display: flex;
+        }
+
+        .workspace-action-btn {
+            width: 24px;
+            height: 24px;
+            border-radius: 4px;
+            background: transparent;
+            border: none;
+            color: rgba(255,255,255,0.6);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .workspace-action-btn:hover {
+            background: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .add-workspace-btn {
+            margin: 12px;
+            padding: 12px;
+            background: rgba(24,144,255,0.2);
+            border: 1px dashed rgba(24,144,255,0.5);
+            border-radius: 8px;
+            color: #1890ff;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .add-workspace-btn:hover {
+            background: rgba(24,144,255,0.3);
+            border-color: #1890ff;
+        }
+
+        /* Main Content Area */
+        .main-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        .container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        .page-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+
+        .page-title h2 {
+            font-size: 28px;
+            margin-bottom: 4px;
+        }
+
+        .page-title p {
+            color: #666;
+            font-size: 14px;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-primary {
+            background: #1890ff;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #40a9ff;
+        }
+
+        .btn-secondary {
+            background: white;
+            color: #333;
+            border: 1px solid #d9d9d9;
+        }
+
+        .btn-secondary:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 13px;
+        }
+
+        /* Position Group Styles (like Monday.com) */
+        .position-group {
+            background: white;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        .position-header {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: #fafafa;
+            border-left: 4px solid;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .position-header:hover {
+            background: #f5f5f5;
+        }
+
+        .position-header.collapsed {
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .collapse-icon {
+            font-size: 14px;
+            margin-right: 12px;
+            transition: transform 0.2s;
+        }
+
+        .collapse-icon.collapsed {
+            transform: rotate(-90deg);
+        }
+
+        .position-name {
+            flex: 1;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .position-count {
+            color: #999;
+            font-size: 13px;
+            margin-right: 12px;
+        }
+
+        .position-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .position-content {
+            display: block;
+        }
+
+        .position-content.collapsed {
+            display: none;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        thead {
+            background: #fafafa;
+            border-bottom: 2px solid #f0f0f0;
+        }
+
+        th {
+            padding: 12px 16px;
+            text-align: left;
+            font-weight: 600;
+            color: #333;
+            white-space: nowrap;
+            position: relative;
+        }
+
+        td {
+            padding: 12px 16px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        tr:hover {
+            background: #fafafa;
+        }
+
+        /* Frozen first column (Name) */
+        thead th:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 3;
+            background: #fafafa;
+            box-shadow: 2px 0 6px rgba(0,0,0,0.08);
+        }
+
+        tbody td:first-child {
+            position: sticky;
+            left: 0;
+            z-index: 1;
+            background: white;
+            box-shadow: 2px 0 6px rgba(0,0,0,0.08);
+        }
+
+        tr:hover td:first-child {
+            background: #fafafa;
+        }
+
+        /* Column header with dropdown */
+        .column-header {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            position: relative;
+        }
+
+        .column-name-text {
+            cursor: pointer;
+            padding: 4px 6px;
+            border-radius: 4px;
+            transition: background 0.2s;
+            flex: 1;
+        }
+
+        .column-name-text:hover {
+            background: #f0f0f0;
+        }
+
+        .column-name-input {
+            padding: 4px 6px;
+            border: 2px solid #1890ff;
+            border-radius: 4px;
+            font-size: 14px;
+            font-weight: 600;
+            outline: none;
+            width: 150px;
+        }
+
+        .column-menu-icon {
+            cursor: pointer;
+            color: #999;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-size: 16px;
+            opacity: 0;
+            transition: all 0.2s;
+        }
+
+        .column-header:hover .column-menu-icon {
+            opacity: 1;
+        }
+
+        .column-menu-icon:hover {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .column-dropdown {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 4px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            min-width: 180px;
+            z-index: 1000;
+            display: none;
+            padding: 4px 0;
+        }
+
+        .column-dropdown.active {
+            display: block;
+        }
+
+        .dropdown-item {
+            padding: 10px 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .dropdown-item:hover {
+            background: #f5f5f5;
+        }
+
+        .dropdown-item.danger {
+            color: #ff4d4f;
+        }
+
+        .dropdown-item.danger:hover {
+            background: #fff2f0;
+        }
+
+        .add-column-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: #1890ff;
+            font-size: 20px;
+            padding: 4px 12px;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .add-column-btn:hover {
+            background: #f0f0f0;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        .badge-green {
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+
+        .badge-red {
+            background: #fff2e8;
+            color: #ff4d4f;
+            border: 1px solid #ffbb96;
+        }
+
+        .badge-blue {
+            background: #e6f7ff;
+            color: #1890ff;
+            border: 1px solid #91d5ff;
+        }
+
+        .badge-purple {
+            background: #f9f0ff;
+            color: #722ed1;
+            border: 1px solid #d3adf7;
+        }
+
+        .badge-orange {
+            background: #fff7e6;
+            color: #fa8c16;
+            border: 1px solid #ffd591;
+        }
+
+        .badge-cyan {
+            background: #e6fffb;
+            color: #13c2c2;
+            border: 1px solid #87e8de;
+        }
+
+        .badge-magenta {
+            background: #fff0f6;
+            color: #eb2f96;
+            border: 1px solid #ffadd2;
+        }
+
+        .badge-yellow {
+            background: #feffe6;
+            color: #d4b106;
+            border: 1px solid #fffb8f;
+        }
+
+        .badge-lime {
+            background: #fcffe6;
+            color: #7cb305;
+            border: 1px solid #eaff8f;
+        }
+
+        .badge-geekblue {
+            background: #f0f5ff;
+            color: #2f54eb;
+            border: 1px solid #adc6ff;
+        }
+
+        /* Feedback Reminder Feature Styles */
+        .active-badge {
+            display: inline-block;
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 11px;
+            margin-left: 8px;
+            font-weight: 500;
+        }
+
+        .btn-toggle-active {
+            background: transparent;
+            border: 1px solid #d9d9d9;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            margin-left: 12px;
+            transition: all 0.2s;
+        }
+
+        .btn-toggle-active:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .btn-toggle-active.active {
+            background: #f6ffed;
+            border-color: #52c41a;
+            color: #52c41a;
+        }
+
+        .missing-feedback-cell {
+            background: #fff7e6;
+            border-left: 3px solid #faad14;
+            padding: 8px;
+            min-height: 60px;
+        }
+
+        .missing-feedback-alert {
+            color: #d46b08;
+            font-size: 12px;
+            font-weight: 500;
+            margin-bottom: 6px;
+        }
+
+        .btn-send-reminder {
+            background: #e6f7ff;
+            color: #1890ff;
+            border: 1px solid #91d5ff;
+            padding: 4px 12px;
+            border-radius: 4px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-send-reminder:hover {
+            background: #bae7ff;
+            border-color: #40a9ff;
+        }
+
+        .reminder-candidate-info {
+            background: #f5f5f5;
+            padding: 16px;
+            border-radius: 8px;
+            line-height: 1.8;
+        }
+
+        .reminder-candidate-info p {
+            margin: 4px 0;
+        }
+
+        .collaborator-list {
+            border: 1px solid #d9d9d9;
+            border-radius: 4px;
+            padding: 12px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .collaborator-item {
+            display: flex;
+            align-items: center;
+            padding: 8px;
+            margin-bottom: 4px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .collaborator-item:hover {
+            background: #f5f5f5;
+        }
+
+        .collaborator-item input[type="checkbox"] {
+            margin-right: 12px;
+        }
+
+        .collaborator-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            background: #1890ff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 12px;
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .collaborator-info {
+            flex: 1;
+        }
+
+        .collaborator-name {
+            font-weight: 500;
+            display: block;
+        }
+
+        .collaborator-email {
+            font-size: 12px;
+            color: #999;
+        }
+
+        .notification-bell {
+            position: relative;
+            background: transparent;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            padding: 8px;
+            transition: transform 0.2s;
+        }
+
+        .notification-bell:hover {
+            transform: scale(1.1);
+        }
+
+        .notification-badge {
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: #ff4d4f;
+            color: white;
+            font-size: 11px;
+            font-weight: 600;
+            padding: 2px 6px;
+            border-radius: 10px;
+            min-width: 18px;
+            text-align: center;
+            display: none;
+        }
+
+        .notification-badge.has-notifications {
+            display: block;
+        }
+
+        .notification-panel {
+            position: fixed;
+            top: 70px;
+            right: 24px;
+            width: 400px;
+            max-height: 600px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            display: none;
+            z-index: 1000;
+        }
+
+        .notification-panel.open {
+            display: block;
+            animation: slideInRight 0.3s ease;
+        }
+
+        @keyframes slideInRight {
+            from {
+                transform: translateX(20px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        .notification-panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .notification-list {
+            max-height: 500px;
+            overflow-y: auto;
+        }
+
+        .notification-item {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .notification-item:hover {
+            background: #fafafa;
+        }
+
+        .notification-item.unread {
+            background: #e6f7ff;
+        }
+
+        .notification-icon {
+            display: inline-block;
+            font-size: 20px;
+            margin-right: 12px;
+            vertical-align: top;
+        }
+
+        .notification-content {
+            display: inline-block;
+            vertical-align: top;
+            width: calc(100% - 40px);
+        }
+
+        .notification-title {
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #333;
+        }
+
+        .notification-message {
+            font-size: 13px;
+            color: #666;
+            margin-bottom: 4px;
+            line-height: 1.5;
+        }
+
+        .notification-time {
+            font-size: 11px;
+            color: #999;
+        }
+
+        .notification-actions {
+            margin-top: 8px;
+        }
+
+        .notification-actions button {
+            font-size: 12px;
+            padding: 4px 12px;
+            margin-right: 8px;
+        }
+
+        .btn-text {
+            background: transparent;
+            border: none;
+            color: #1890ff;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px 8px;
+        }
+
+        .btn-text:hover {
+            text-decoration: underline;
+        }
+
+        .toast-notification {
+            position: fixed;
+            top: 80px;
+            right: -400px;
+            width: 350px;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            transition: right 0.3s ease;
+        }
+
+        .toast-notification.show {
+            right: 24px;
+        }
+
+        .toast-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 16px;
+            background: #1890ff;
+            color: white;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+        }
+
+        .toast-header button {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            padding: 0;
+            line-height: 1;
+        }
+
+        .toast-body {
+            padding: 16px;
+            color: #333;
+            line-height: 1.5;
+        }
+
+        .progress-container {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .progress-bar {
+            flex: 1;
+            height: 6px;
+            background: #f0f0f0;
+            border-radius: 3px;
+            overflow: hidden;
+            min-width: 80px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: #52c41a;
+            transition: width 0.3s;
+        }
+
+        .progress-fill.medium {
+            background: #1890ff;
+        }
+
+        .progress-fill.low {
+            background: #faad14;
+        }
+
+        .file-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            padding: 4px 8px;
+            background: #f5f5f5;
+            border-radius: 4px;
+            font-size: 12px;
+            margin-right: 4px;
+            margin-bottom: 4px;
+        }
+
+        .action-btn {
+            padding: 4px 8px;
+            background: none;
+            border: none;
+            color: #1890ff;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .action-btn:hover {
+            text-decoration: underline;
+        }
+
+        .action-btn.danger {
+            color: #ff4d4f;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 8px;
+            padding: 24px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        .modal-header {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+
+        .form-group {
+            margin-bottom: 16px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 8px 12px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+            font-family: inherit;
+        }
+
+        .modal-actions {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 24px;
+        }
+
+        .demo-banner {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 12px 24px;
+            text-align: center;
+            font-weight: 500;
+        }
+
+        .quick-add-modal {
+            position: absolute;
+            background: white;
+            border-radius: 8px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            padding: 16px;
+            width: 320px;
+            z-index: 1000;
+            display: none;
+        }
+
+        .quick-add-modal.active {
+            display: block;
+        }
+
+        .add-position-btn {
+            width: 100%;
+            padding: 16px;
+            background: white;
+            border: 2px dashed #d9d9d9;
+            border-radius: 8px;
+            color: #666;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-bottom: 16px;
+        }
+
+        .add-position-btn:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 40px;
+            color: #999;
+        }
+
+        /* Tab Navigation */
+        .tab-navigation {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 24px;
+            border-bottom: 2px solid #f0f0f0;
+            padding-bottom: 0;
+        }
+
+        .tab-item {
+            padding: 12px 20px;
+            background: none;
+            border: none;
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            position: relative;
+            transition: color 0.2s;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+
+        .tab-item:hover {
+            color: #1890ff;
+        }
+
+        .tab-item.active {
+            color: #1890ff;
+            border-bottom-color: #1890ff;
+        }
+
+        .view-container {
+            display: none;
+        }
+
+        .view-container.active {
+            display: block;
+        }
+
+        /* Chart View */
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            border: 1px solid #f0f0f0;
+        }
+
+        .chart-header {
+            margin-bottom: 20px;
+            padding-bottom: 16px;
+            border-bottom: 2px solid #f0f0f0;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+        }
+
+        .chart-title {
+            font-size: 18px;
+            font-weight: 700;
+            margin-bottom: 4px;
+        }
+
+        .chart-subtitle {
+            font-size: 13px;
+            color: #999;
+        }
+
+        .chart-total-badge {
+            background: #f0f5ff;
+            color: #2f54eb;
+            border: 1px solid #adc6ff;
+            border-radius: 20px;
+            padding: 4px 14px;
+            font-size: 13px;
+            font-weight: 600;
+            white-space: nowrap;
+            flex-shrink: 0;
+        }
+
+        .vchart-area {
+            display: flex;
+            gap: 0;
+        }
+
+        .vchart-y-axis {
+            width: 40px;
+            height: 200px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: flex-end;
+            padding-right: 8px;
+            flex-shrink: 0;
+        }
+
+        .vchart-y-label {
+            font-size: 11px;
+            color: #bfbfbf;
+            line-height: 1;
+        }
+
+        .vchart-plot {
+            flex: 1;
+            height: 200px;
+            position: relative;
+            border-left: 2px solid #e0e0e0;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        .vchart-grid-line {
+            position: absolute;
+            left: 0;
+            right: 0;
+            border-top: 1px dashed #f0f0f0;
+        }
+
+        .vchart-bars {
+            display: flex;
+            height: 100%;
+            align-items: flex-end;
+            padding: 0 20px;
+            gap: 16px;
+            box-sizing: border-box;
+        }
+
+        .vchart-col {
+            flex: 1;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            height: 100%;
+        }
+
+        .vchart-bar {
+            width: 100%;
+            max-width: 80px;
+            border-radius: 6px 6px 0 0;
+            transition: height 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+            min-height: 4px;
+            position: relative;
+            cursor: default;
+        }
+
+        .vchart-bar:hover {
+            filter: brightness(0.88);
+        }
+
+        .vchart-count {
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 700;
+            color: #333;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .vchart-x-row {
+            display: flex;
+            margin-left: 40px;
+            padding: 0 20px;
+            gap: 16px;
+        }
+
+        .vchart-x-label {
+            flex: 1;
+            text-align: center;
+            font-size: 12px;
+            font-weight: 500;
+            color: #555;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            padding-top: 8px;
+        }
+
+        .chart-legend {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px 20px;
+            margin-top: 16px;
+            padding-top: 14px;
+            border-top: 1px solid #f5f5f5;
+        }
+
+        .chart-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: #444;
+        }
+
+        .chart-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+            flex-shrink: 0;
+        }
+
+        .save-indicator {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            background: #52c41a;
+            color: white;
+            padding: 12px 20px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10000;
+            font-size: 14px;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            opacity: 0;
+            transform: translateY(20px);
+            transition: all 0.3s;
+            pointer-events: none;
+        }
+
+        .save-indicator.show {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* ── Auth Modal ─────────────────────────────── */
+        .auth-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.55);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+        .auth-box {
+            background: white;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 420px;
+            padding: 40px 36px 32px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.25);
+        }
+        .auth-logo {
+            text-align: center;
+            font-size: 32px;
+            margin-bottom: 8px;
+        }
+        .auth-title {
+            text-align: center;
+            font-size: 22px;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 4px;
+        }
+        .auth-subtitle {
+            text-align: center;
+            font-size: 13px;
+            color: #999;
+            margin-bottom: 28px;
+        }
+        .auth-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid #f0f0f0;
+            margin-bottom: 24px;
+        }
+        .auth-tab-btn {
+            flex: 1;
+            background: none;
+            border: none;
+            padding: 10px 0;
+            font-size: 14px;
+            font-weight: 600;
+            color: #999;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+        }
+        .auth-tab-btn.active {
+            color: #1890ff;
+            border-bottom-color: #1890ff;
+        }
+        .auth-field {
+            margin-bottom: 16px;
+        }
+        .auth-field label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-bottom: 6px;
+        }
+        .auth-field input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1.5px solid #d9d9d9;
+            border-radius: 8px;
+            font-size: 14px;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+        .auth-field input:focus { border-color: #1890ff; }
+        .auth-error {
+            font-size: 13px;
+            color: #ff4d4f;
+            margin-bottom: 12px;
+            min-height: 18px;
+        }
+        .auth-btn {
+            width: 100%;
+            padding: 12px;
+            background: #1890ff;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .auth-btn:hover { background: #096dd9; }
+
+        /* ── User display in header ─────────────────── */
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: #f5f5f5;
+            border-radius: 20px;
+            padding: 4px 14px 4px 6px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #333;
+        }
+        .user-avatar {
+            width: 26px;
+            height: 26px;
+            border-radius: 50%;
+            background: #1890ff;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 11px;
+            font-weight: 700;
+        }
+        .btn-logout {
+            background: none;
+            border: 1.5px solid #d9d9d9;
+            border-radius: 6px;
+            padding: 5px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            color: #666;
+        }
+        .btn-logout:hover { border-color: #ff4d4f; color: #ff4d4f; }
+    </style>
+</head>
+<body>
+    <div class="demo-banner">
+        💾 PERSISTENT DEMO - All your data is automatically saved!
+        <span id="lastSavedIndicator" style="margin-left: 12px; font-size: 13px; opacity: 0.8;"></span>
+        <button onclick="showModal('shareModal')" style="margin-left: 16px; padding: 4px 12px; background: rgba(76, 175, 80, 0.3); border: 1px solid rgba(255,255,255,0.8); border-radius: 4px; color: white; cursor: pointer; font-size: 13px; font-weight: 600;">
+            👥 Share & Collaborate
+        </button>
+        <button onclick="exportData()" style="margin-left: 8px; padding: 4px 12px; background: rgba(255,255,255,0.2); border: 1px solid white; border-radius: 4px; color: white; cursor: pointer; font-size: 13px;">
+            📥 Export Backup
+        </button>
+        <button onclick="document.getElementById('importFile').click()" style="margin-left: 8px; padding: 4px 12px; background: rgba(255,255,255,0.2); border: 1px solid white; border-radius: 4px; color: white; cursor: pointer; font-size: 13px;">
+            📤 Import Backup
+        </button>
+        <button onclick="clearLocalStorage()" style="margin-left: 8px; padding: 4px 12px; background: rgba(255,255,255,0.2); border: 1px solid white; border-radius: 4px; color: white; cursor: pointer; font-size: 13px;">
+            🗑️ Clear All Data
+        </button>
+        <input type="file" id="importFile" accept=".json" style="display: none;" onchange="importData(event)">
+        <span id="syncStatus" style="margin-left: 12px; font-size: 12px; opacity: 0.7;"></span>
+    </div>
+
+    <div class="app-layout">
+        <!-- Sidebar Navigation -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <div class="sidebar-title">
+                    <span>Workspaces</span>
+                    <button onclick="showModal('newWorkspaceModal')" style="background: none; border: none; color: rgba(255,255,255,0.6); cursor: pointer; padding: 4px; display: flex; align-items: center; border-radius: 4px; transition: all 0.2s;" onmouseover="this.style.color='white'; this.style.background='rgba(255,255,255,0.1)'" onmouseout="this.style.color='rgba(255,255,255,0.6)'; this.style.background='none'">
+                        <span style="font-size: 18px;">⋯</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="workspace-list" id="workspaceList">
+                <!-- Workspaces will be rendered here -->
+            </div>
+
+            <button class="add-workspace-btn" onclick="showModal('newWorkspaceModal')">
+                <span style="font-size: 18px;">+</span>
+                <span>New Workspace</span>
+            </button>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="currentWorkspaceName">👥 Recruitment Scoreboard</h1>
+                <div class="header-right">
+                    <div class="user-chip" id="userChip" style="display:none;">
+                        <div class="user-avatar" id="userAvatar">?</div>
+                        <span id="userDisplayName"></span>
+                    </div>
+                    <button class="btn-logout" id="logoutBtn" style="display:none;" onclick="logout()">Sign out</button>
+                    <button class="btn btn-primary" onclick="showModal('newPositionModal')">
+                        ➕ Add New Position
+                    </button>
+                </div>
+            </div>
+
+            <div class="container">
+        <div class="page-header">
+            <div class="page-title">
+                <h2>All Positions</h2>
+                <p>Manage candidates across multiple job positions</p>
+            </div>
+        </div>
+
+        <!-- Tab Navigation -->
+        <div class="tab-navigation">
+            <button class="tab-item active" onclick="switchView('table')">
+                📋 Main table
+            </button>
+            <button class="tab-item" onclick="switchView('chart')">
+                📊 Chart
+            </button>
+        </div>
+
+        <!-- Main Table View -->
+        <div id="tableView" class="view-container active">
+            <!-- Add Position Button -->
+            <button class="add-position-btn" onclick="showModal('newPositionModal')">
+                ➕ Add New Position
+            </button>
+
+            <!-- Positions Container -->
+            <div id="positionsContainer">
+                <!-- Position groups will be rendered here -->
+            </div>
+        </div>
+
+        <!-- Chart View -->
+        <div id="chartView" class="view-container">
+            <div id="chartsContainer">
+                <!-- Charts will be rendered here -->
+            </div>
+        </div>
+        </div> <!-- End container -->
+        </div> <!-- End main-content -->
+    </div> <!-- End app-layout -->
+
+    <!-- Save Indicator (floating) -->
+    <div id="saveIndicator" class="save-indicator">
+        <span>💾</span>
+        <span>Saved!</span>
+    </div>
+
+    <!-- New Position Modal -->
+    <div id="newPositionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">➕ Create New Position</div>
+            <div class="form-group">
+                <label>Position Name *</label>
+                <input type="text" id="newPositionName" placeholder="e.g., QA Lead, Product Manager">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="newPositionDesc" placeholder="Brief description of this position" rows="3"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Color Theme</label>
+                <select id="newPositionColor">
+                    <option value="#1890ff">Blue</option>
+                    <option value="#52c41a">Green</option>
+                    <option value="#ff4d4f">Red</option>
+                    <option value="#722ed1">Purple</option>
+                    <option value="#fa8c16">Orange</option>
+                    <option value="#13c2c2">Cyan</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideModal('newPositionModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createPosition()">Create Position</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Candidate Modal -->
+    <div id="candidateModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">➕ Add New Candidate</div>
+            <input type="hidden" id="candidatePositionId">
+            <div class="form-group">
+                <label>Full Name *</label>
+                <input type="text" id="candidateName" placeholder="e.g., John Doe">
+            </div>
+            <div class="form-group">
+                <label>Email Address</label>
+                <input type="email" id="candidateEmail" placeholder="john.doe@example.com">
+            </div>
+            <div class="form-group">
+                <label>Phone Number</label>
+                <input type="tel" id="candidatePhone" placeholder="+1 (555) 123-4567">
+            </div>
+            <div class="form-group">
+                <label>Resume / CV (Optional)</label>
+                <input type="file" id="candidateResume" accept=".pdf,.doc,.docx" style="padding: 8px;">
+                <small style="color: #999; font-size: 12px; display: block; margin-top: 4px;">
+                    Accepted formats: PDF, DOC, DOCX (Max 5MB)
+                </small>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideModal('candidateModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="addCandidate()">Add Candidate</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Resume Viewer Modal -->
+    <div id="resumeViewerModal" class="modal">
+        <div class="modal-content" style="max-width: 900px; max-height: 90vh;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <span id="resumeViewerTitle">Resume Preview</span>
+                <button onclick="hideModal('resumeViewerModal')" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #999;">×</button>
+            </div>
+            <div id="resumeViewerContent" style="height: 70vh; overflow: auto; border: 1px solid #f0f0f0; border-radius: 8px; padding: 16px;">
+                <!-- Resume content will be displayed here -->
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideModal('resumeViewerModal')">Close</button>
+                <button class="btn btn-primary" id="downloadResumeBtn" onclick="downloadCurrentResume()">📥 Download</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Add Column Modal -->
+    <div id="addColumnModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">➕ Add New Column</div>
+            <input type="hidden" id="columnPositionId">
+            <div class="form-group">
+                <label>Column Name *</label>
+                <input type="text" id="newColumnName" placeholder="e.g., Skills, Location, Salary">
+            </div>
+            <div class="form-group">
+                <label>Column Type *</label>
+                <select id="newColumnType" style="width: 100%; padding: 10px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                    <option value="text">📝 Text - Simple text input</option>
+                    <option value="status">🏷️ Status - Dropdown with badges</option>
+                    <option value="date">📅 Date - Date picker</option>
+                    <option value="file">📎 File - File upload</option>
+                    <option value="percentage">📊 Percentage - 0-100% with progress bar</option>
+                    <option value="number">🔢 Number - Numeric input</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideModal('addColumnModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="addNewColumn()">Add Column</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- New Workspace Modal -->
+    <div id="newWorkspaceModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">✨ Create New Workspace</div>
+            <div class="form-group">
+                <label>Workspace Name *</label>
+                <input type="text" id="newWorkspaceName" placeholder="e.g., Recruitment Board, Open Positions">
+            </div>
+            <div class="form-group">
+                <label>Description (Optional)</label>
+                <textarea id="newWorkspaceDescription" placeholder="Brief description of this workspace..." style="width: 100%; padding: 10px; border: 1px solid #d9d9d9; border-radius: 4px; font-family: inherit; resize: vertical; min-height: 80px;"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Icon</label>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button type="button" class="icon-selector" data-icon="👥" onclick="selectWorkspaceIcon('👥', event)">👥</button>
+                    <button type="button" class="icon-selector" data-icon="📋" onclick="selectWorkspaceIcon('📋', event)">📋</button>
+                    <button type="button" class="icon-selector" data-icon="🎯" onclick="selectWorkspaceIcon('🎯', event)">🎯</button>
+                    <button type="button" class="icon-selector" data-icon="💼" onclick="selectWorkspaceIcon('💼', event)">💼</button>
+                    <button type="button" class="icon-selector" data-icon="🚀" onclick="selectWorkspaceIcon('🚀', event)">🚀</button>
+                    <button type="button" class="icon-selector" data-icon="📊" onclick="selectWorkspaceIcon('📊', event)">📊</button>
+                    <button type="button" class="icon-selector" data-icon="🏢" onclick="selectWorkspaceIcon('🏢', event)">🏢</button>
+                    <button type="button" class="icon-selector" data-icon="⭐" onclick="selectWorkspaceIcon('⭐', event)">⭐</button>
+                </div>
+                <input type="hidden" id="selectedWorkspaceIcon" value="👥">
+            </div>
+            <div class="form-group">
+                <label>Color</label>
+                <select id="newWorkspaceColor" style="width: 100%; padding: 10px; border: 1px solid #d9d9d9; border-radius: 4px;">
+                    <option value="#1890ff">Blue</option>
+                    <option value="#52c41a">Green</option>
+                    <option value="#ff4d4f">Red</option>
+                    <option value="#722ed1">Purple</option>
+                    <option value="#fa8c16">Orange</option>
+                    <option value="#13c2c2">Cyan</option>
+                    <option value="#eb2f96">Pink</option>
+                    <option value="#faad14">Gold</option>
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideModal('newWorkspaceModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="createWorkspace()">Create Workspace</button>
+            </div>
+        </div>
+    </div>
+
+    <style>
+        .icon-selector {
+            width: 48px;
+            height: 48px;
+            border: 2px solid #d9d9d9;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            font-size: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .icon-selector:hover {
+            border-color: #1890ff;
+            transform: scale(1.05);
+        }
+
+        .icon-selector.selected {
+            border-color: #1890ff;
+            background: #e6f7ff;
+            border-width: 3px;
+        }
+    </style>
+
+    <!-- Share & Collaborate Modal -->
+    <div id="shareModal" class="modal">
+        <div class="modal-content" style="max-width: 600px;">
+            <div class="modal-header">👥 Share & Collaborate</div>
+
+            <div style="margin-bottom: 24px; padding: 16px; background: #e6f7ff; border-left: 3px solid #1890ff; border-radius: 4px;">
+                <div style="font-weight: 600; margin-bottom: 8px; color: #1890ff;">🌐 Collaboration Features</div>
+                <ul style="margin-left: 20px; color: #0050b3; font-size: 13px; line-height: 1.8;">
+                    <li>Share board with view-only or edit access</li>
+                    <li>Real-time sync across all devices</li>
+                    <li>Automatic conflict resolution</li>
+                    <li>Track who made changes (coming soon)</li>
+                </ul>
+            </div>
+
+            <div class="form-group">
+                <label style="font-weight: 600; margin-bottom: 12px; display: block;">Choose Access Level</label>
+                <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+                    <label style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 16px; border: 2px solid #d9d9d9; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#1890ff'" onmouseout="if(!document.getElementById('accessEdit').checked) this.style.borderColor='#d9d9d9'">
+                        <input type="radio" id="accessEdit" name="accessLevel" value="edit" checked style="width: 18px; height: 18px;">
+                        <div>
+                            <div style="font-weight: 600; color: #333;">✏️ Can Edit</div>
+                            <div style="font-size: 12px; color: #999;">Full access to add/edit/delete</div>
+                        </div>
+                    </label>
+                    <label style="flex: 1; display: flex; align-items: center; gap: 8px; padding: 16px; border: 2px solid #d9d9d9; border-radius: 8px; cursor: pointer; transition: all 0.2s;" onmouseover="this.style.borderColor='#1890ff'" onmouseout="if(!document.getElementById('accessView').checked) this.style.borderColor='#d9d9d9'">
+                        <input type="radio" id="accessView" name="accessLevel" value="view" style="width: 18px; height: 18px;">
+                        <div>
+                            <div style="font-weight: 600; color: #333;">👁️ View Only</div>
+                            <div style="font-size: 12px; color: #999;">Can view but not modify</div>
+                        </div>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label style="font-weight: 600; margin-bottom: 8px; display: block;">Enable Cloud Sync</label>
+                <div style="display: flex; align-items: center; gap: 12px; padding: 16px; background: #f0f0f0; border-radius: 8px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; flex: 1;">
+                        <input type="checkbox" id="enableCloudSync" style="width: 18px; height: 18px;">
+                        <span style="font-size: 14px;">☁️ Sync with cloud (Real-time collaboration)</span>
+                    </label>
+                </div>
+                <div style="font-size: 12px; color: #666; margin-top: 8px; padding-left: 4px;">
+                    When enabled, changes sync in real-time across all devices. Uses free cloud storage.
+                </div>
+            </div>
+
+            <div id="shareLinksSection" style="display: none; margin-bottom: 20px;">
+                <div style="font-weight: 600; margin-bottom: 12px;">📎 Shareable Links</div>
+
+                <div style="margin-bottom: 16px;">
+                    <label style="font-size: 13px; color: #666; margin-bottom: 6px; display: block;">Share Link (Click to copy)</label>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="shareLink" readonly style="flex: 1; padding: 10px; border: 1px solid #d9d9d9; border-radius: 4px; background: #fafafa; font-size: 13px; font-family: monospace;">
+                        <button class="btn btn-primary" onclick="copyShareLink()" style="padding: 10px 16px;">
+                            📋 Copy
+                        </button>
+                    </div>
+                </div>
+
+                <div style="padding: 12px; background: #fff7e6; border-left: 3px solid #faad14; border-radius: 4px; font-size: 13px; color: #ad6800;">
+                    <strong>⚠️ Important:</strong> Anyone with this link can access your board. Keep it secure!
+                </div>
+            </div>
+
+            <div id="cloudSyncInfo" style="display: none; margin-bottom: 20px; padding: 16px; background: #f6ffed; border-left: 3px solid #52c41a; border-radius: 4px;">
+                <div style="font-weight: 600; color: #52c41a; margin-bottom: 8px;">✅ Cloud Sync Enabled</div>
+                <div style="font-size: 13px; color: #389e0d; line-height: 1.6;">
+                    <div style="margin-bottom: 6px;">Board ID: <code id="cloudBoardId" style="background: rgba(0,0,0,0.05); padding: 2px 6px; border-radius: 3px;"></code></div>
+                    <div>Status: <span id="cloudSyncStatusText">Connected</span></div>
+                </div>
+            </div>
+
+            <div id="activeCollaborators" style="display: none; margin-bottom: 20px;">
+                <div style="font-weight: 600; margin-bottom: 12px;">👥 Active Collaborators</div>
+                <div id="collaboratorsList" style="padding: 16px; background: #f0f0f0; border-radius: 8px; min-height: 60px;">
+                    <div style="color: #999; text-align: center;">No active collaborators</div>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="hideModal('shareModal')">Close</button>
+                <button class="btn btn-primary" id="generateShareLinkBtn" onclick="generateShareLink()">Generate Link</button>
+                <button class="btn btn-primary" id="stopSharingBtn" onclick="stopSharing()" style="display: none; background: #ff4d4f;">Stop Sharing</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reminder Modal -->
+    <div id="reminderModal" class="modal" style="z-index: 3000;">
+        <div class="modal-content" style="max-width: 480px; border-radius: 12px; padding: 0; display: flex; flex-direction: column; max-height: 90vh;">
+
+            <!-- Header (fixed) -->
+            <div style="background: linear-gradient(135deg, #1890ff, #096dd9); padding: 18px 24px; display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; border-radius: 12px 12px 0 0;">
+                <div style="display: flex; align-items: center; gap: 10px; color: white;">
+                    <span style="font-size: 22px;">🔔</span>
+                    <div>
+                        <div style="font-size: 16px; font-weight: 700;">Send Feedback Reminder</div>
+                        <div style="font-size: 12px; opacity: 0.85;">Nudge someone to submit feedback</div>
+                    </div>
+                </div>
+                <button onclick="closeReminderModal()" style="background: rgba(255,255,255,0.2); border: none; color: white; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-size: 16px; display: flex; align-items: center; justify-content: center; line-height: 1; flex-shrink: 0;">&times;</button>
+            </div>
+
+            <!-- Candidate Info Banner (fixed) -->
+            <div style="background: #f0f7ff; border-bottom: 1px solid #d6e8ff; padding: 12px 24px; display: flex; gap: 16px; flex-shrink: 0;">
+                <div style="flex: 1;">
+                    <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Candidate</div>
+                    <div style="font-weight: 600; color: #333;" id="reminderCandidateName">—</div>
+                </div>
+                <div style="width: 1px; background: #d6e8ff;"></div>
+                <div style="flex: 1;">
+                    <div style="font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 2px;">Position</div>
+                    <div style="font-weight: 600; color: #333;" id="reminderPositionName">—</div>
+                </div>
+            </div>
+
+            <!-- Form Body (scrollable) -->
+            <div style="padding: 20px 24px; overflow-y: auto; flex: 1;">
+
+                <!-- Email Input -->
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 600; font-size: 14px; color: #333; margin-bottom: 8px;">
+                        📧 Recipient Email Address <span style="color: #ff4d4f;">*</span>
+                    </label>
+                    <input type="email"
+                           id="reminderEmailInput"
+                           placeholder="e.g. sarah@company.com"
+                           style="width: 100%; padding: 10px 14px; border: 1.5px solid #d9d9d9; border-radius: 8px; font-size: 14px; outline: none; box-sizing: border-box; transition: border-color 0.2s;"
+                           onfocus="this.style.borderColor='#1890ff'"
+                           onblur="this.style.borderColor='#d9d9d9'"
+                    />
+                    <div id="emailError" style="color: #ff4d4f; font-size: 12px; margin-top: 4px; display: none;">
+                        ⚠️ Please enter a valid email address.
+                    </div>
+                </div>
+
+                <!-- Message -->
+                <div style="margin-bottom: 16px;">
+                    <label style="display: block; font-weight: 600; font-size: 14px; color: #333; margin-bottom: 8px;">
+                        💬 Message
+                    </label>
+                    <textarea id="reminderEmailBody"
+                              rows="4"
+                              style="width: 100%; padding: 10px 14px; border: 1.5px solid #d9d9d9; border-radius: 8px; font-size: 13px; outline: none; box-sizing: border-box; resize: vertical; line-height: 1.6; transition: border-color 0.2s; font-family: inherit;"
+                              onfocus="this.style.borderColor='#1890ff'"
+                              onblur="this.style.borderColor='#d9d9d9'"></textarea>
+                    <div style="font-size: 11px; color: #aaa; margin-top: 4px;">You can edit this message before sending.</div>
+                </div>
+
+                <!-- Info note -->
+                <div style="background: #fffbe6; border: 1px solid #ffe58f; border-radius: 8px; padding: 10px 14px; display: flex; gap: 10px; align-items: flex-start;">
+                    <span style="font-size: 15px; flex-shrink: 0;">💡</span>
+                    <div style="font-size: 12px; color: #7c5800; line-height: 1.5;">
+                        Clicking <strong>Send Reminder</strong> will open <strong>Gmail</strong> in a new tab with the message pre-filled. Just hit <strong>Send</strong> in Gmail to deliver the reminder.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer Actions (fixed at bottom) -->
+            <div style="padding: 14px 24px; background: #fafafa; border-top: 1px solid #f0f0f0; display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0; border-radius: 0 0 12px 12px;">
+                <button onclick="closeReminderModal()"
+                        style="padding: 9px 20px; border: 1px solid #d9d9d9; background: white; border-radius: 8px; cursor: pointer; font-size: 14px; color: #555;">
+                    Cancel
+                </button>
+                <button onclick="sendReminder()"
+                        style="padding: 9px 20px; background: #1890ff; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 6px;">
+                    🔔 Send Reminder
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ── Auth Modal ──────────────────────────────────────────────────── -->
+    <div class="auth-overlay" id="loginModal">
+        <div class="auth-box">
+            <div class="auth-logo">📋</div>
+            <div class="auth-title">Recruitment Scoreboard</div>
+            <div class="auth-subtitle">Sign in to access your workspace</div>
+
+            <div class="auth-tabs">
+                <button class="auth-tab-btn active" data-tab="login" onclick="switchAuthTab('login')">Sign In</button>
+                <button class="auth-tab-btn" data-tab="register" onclick="switchAuthTab('register')">Create Account</button>
+            </div>
+
+            <!-- Login -->
+            <div id="loginTab">
+                <div class="auth-field">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="you@example.com" onkeydown="if(event.key==='Enter')doLogin()">
+                </div>
+                <div class="auth-field">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Your password" onkeydown="if(event.key==='Enter')doLogin()">
+                </div>
+                <div class="auth-error" id="loginError"></div>
+                <button class="auth-btn" onclick="doLogin()">Sign In</button>
+            </div>
+
+            <!-- Register -->
+            <div id="registerTab" style="display:none;">
+                <div class="auth-field">
+                    <label>Full Name</label>
+                    <input type="text" id="registerName" placeholder="Your name">
+                </div>
+                <div class="auth-field">
+                    <label>Email</label>
+                    <input type="email" id="registerEmail" placeholder="you@example.com">
+                </div>
+                <div class="auth-field">
+                    <label>Password</label>
+                    <input type="password" id="registerPassword" placeholder="Min 8 chars, 1 uppercase, 1 number">
+                </div>
+                <div class="auth-error" id="registerError"></div>
+                <button class="auth-btn" onclick="doRegister()">Create Account</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // API CLIENT LAYER
+        // ========================================
+
+        // Points to the local Node.js backend (port 3001).
+        // Update this to your Railway/production URL when deploying.
+        const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
+            ? 'http://localhost:3001/api'
+            : '/api';  // same-origin after full deployment
+
+        let _accessToken  = localStorage.getItem('sb_access_token')  || null;
+        let _refreshToken = localStorage.getItem('sb_refresh_token') || null;
+        let currentUser   = null;
+
+        function setTokens(access, refresh) {
+            _accessToken  = access;
+            _refreshToken = refresh;
+            access  ? localStorage.setItem('sb_access_token',  access)  : localStorage.removeItem('sb_access_token');
+            refresh ? localStorage.setItem('sb_refresh_token', refresh) : localStorage.removeItem('sb_refresh_token');
+        }
+
+        function clearTokens() {
+            setTokens(null, null);
+            currentUser = null;
+        }
+
+        function isAuthenticated() { return !!_accessToken; }
+
+        async function apiCall(method, path, body = null) {
+            const headers = { 'Content-Type': 'application/json' };
+            if (_accessToken) headers['Authorization'] = `Bearer ${_accessToken}`;
+
+            const options = { method, headers };
+            if (body) options.body = JSON.stringify(body);
+
+            let resp = await fetch(`${API_BASE}${path}`, options);
+
+            if (resp.status === 401 && _refreshToken) {
+                const ok = await tryRefreshToken();
+                if (ok) {
+                    headers['Authorization'] = `Bearer ${_accessToken}`;
+                    resp = await fetch(`${API_BASE}${path}`, { ...options, headers });
+                } else {
+                    clearTokens();
+                    showAuthModal();
+                    return null;
+                }
+            }
+
+            if (!resp.ok) {
+                const err = await resp.json().catch(() => ({ error: 'Request failed' }));
+                throw new Error(err.error || `HTTP ${resp.status}`);
+            }
+            if (resp.status === 204) return null;
+            return resp.json();
+        }
+
+        // Upload a File object via multipart/form-data (as expected by multer on backend).
+        async function apiUploadFile(file, candidateId, columnId) {
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('candidateId', candidateId);
+            formData.append('columnId', columnId);
+
+            const headers = {};
+            if (_accessToken) headers['Authorization'] = `Bearer ${_accessToken}`;
+            // Do NOT set Content-Type — browser sets it with the multipart boundary
+
+            const doUpload = async () => {
+                const resp = await fetch(`${API_BASE}/files/upload`, {
+                    method: 'POST', headers, body: formData,
+                });
+                if (!resp.ok) {
+                    const err = await resp.json().catch(() => ({ error: 'Upload failed' }));
+                    throw new Error(err.error || `HTTP ${resp.status}`);
+                }
+                return resp.json();
+            };
+
+            try {
+                return await doUpload();
+            } catch (err) {
+                if (err.message.includes('401') && _refreshToken) {
+                    const ok = await tryRefreshToken();
+                    if (ok) { headers['Authorization'] = `Bearer ${_accessToken}`; return doUpload(); }
+                    clearTokens(); showAuthModal(); throw err;
+                }
+                throw err;
+            }
+        }
+
+        async function tryRefreshToken() {
+            if (!_refreshToken) return false;
+            try {
+                const resp = await fetch(`${API_BASE}/auth/refresh`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ refreshToken: _refreshToken }),
+                });
+                if (!resp.ok) return false;
+                const data = await resp.json();
+                setTokens(data.accessToken, data.refreshToken);
+                return true;
+            } catch { return false; }
+        }
+
+        // Fire-and-forget API sync (shows a toast on error)
+        function syncToApi(promise) {
+            promise.catch(err => {
+                console.warn('[API sync]', err.message);
+                showNotification(`⚠️ Sync: ${err.message}`);
+            });
+        }
+
+        // ========================================
+        // AUTH FUNCTIONS
+        // ========================================
+
+        function showAuthModal() {
+            document.getElementById('loginModal').style.display = 'flex';
+        }
+
+        function hideAuthModal() {
+            document.getElementById('loginModal').style.display = 'none';
+        }
+
+        function switchAuthTab(tab) {
+            document.getElementById('loginTab').style.display    = tab === 'login'    ? 'block' : 'none';
+            document.getElementById('registerTab').style.display = tab === 'register' ? 'block' : 'none';
+            document.querySelectorAll('.auth-tab-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector(`.auth-tab-btn[data-tab="${tab}"]`).classList.add('active');
+        }
+
+        async function doLogin() {
+            const email    = document.getElementById('loginEmail').value.trim();
+            const password = document.getElementById('loginPassword').value;
+            const errEl    = document.getElementById('loginError');
+            errEl.textContent = '';
+            if (!email || !password) { errEl.textContent = 'Please fill in all fields'; return; }
+            try {
+                const data = await apiCall('POST', '/auth/login', { email, password });
+                if (!data) return;
+                setTokens(data.accessToken, data.refreshToken);
+                currentUser = data.user;
+                hideAuthModal();
+                updateUserDisplay();
+                await loadFromAPI();
+                showNotification(`✅ Welcome back, ${data.user.name}!`);
+            } catch (err) { errEl.textContent = err.message; }
+        }
+
+        async function doRegister() {
+            const name     = document.getElementById('registerName').value.trim();
+            const email    = document.getElementById('registerEmail').value.trim();
+            const password = document.getElementById('registerPassword').value;
+            const errEl    = document.getElementById('registerError');
+            errEl.textContent = '';
+            if (!name || !email || !password) { errEl.textContent = 'Please fill in all fields'; return; }
+            try {
+                const data = await apiCall('POST', '/auth/register', { name, email, password });
+                if (!data) return;
+                setTokens(data.accessToken, data.refreshToken);
+                currentUser = data.user;
+                hideAuthModal();
+                updateUserDisplay();
+                await loadFromAPI();
+                showNotification(`✅ Account created! Welcome, ${data.user.name}!`);
+            } catch (err) { errEl.textContent = err.message; }
+        }
+
+        async function logout() {
+            try {
+                if (_refreshToken) await apiCall('POST', '/auth/logout', { refreshToken: _refreshToken });
+            } catch {}
+            clearTokens();
+            workspaces = []; positions = []; currentWorkspaceId = null;
+            updateUserDisplay();
+            showAuthModal();
+        }
+
+        function updateUserDisplay() {
+            const chip   = document.getElementById('userChip');
+            const name   = document.getElementById('userDisplayName');
+            const avatar = document.getElementById('userAvatar');
+            const btn    = document.getElementById('logoutBtn');
+            if (currentUser) {
+                name.textContent   = currentUser.name;
+                avatar.textContent = currentUser.name.charAt(0).toUpperCase();
+                chip.style.display = 'flex';
+                btn.style.display  = 'inline-block';
+            } else {
+                chip.style.display = 'none';
+                btn.style.display  = 'none';
+            }
+        }
+
+        // ========================================
+        // API DATA LOADING
+        // ========================================
+
+        async function loadFromAPI() {
+            try {
+                const apiWorkspaces = await apiCall('GET', '/workspaces');
+                if (!apiWorkspaces) return;
+
+                if (apiWorkspaces.length === 0) {
+                    // New user — create a default workspace via API
+                    const created = await apiCall('POST', '/workspaces', {
+                        name: 'Recruitment Scoreboard', description: 'Main board', icon: '👥', color: '#1890ff'
+                    });
+                    if (created) apiWorkspaces.push(created);
+                }
+
+                workspaces = apiWorkspaces.map(w => ({
+                    id: w.id,          // UUID used as local id
+                    _apiId: w.id,
+                    name: w.name,
+                    description: w.description,
+                    icon: w.icon || '📋',
+                    color: w.color,
+                    positions: [],
+                    nextPositionId: 1,
+                    createdAt: w.createdAt,
+                }));
+
+                currentWorkspaceId = workspaces[0]?.id || null;
+                renderWorkspaceList();
+                await loadPositionsFromAPI();
+                renderAll();
+            } catch (err) {
+                console.error('[loadFromAPI]', err);
+                showNotification('⚠️ Could not reach the server. Please check your connection.', 5000, 'error');
+                workspaces = [];
+                positions = [];
+                currentWorkspaceId = null;
+                renderWorkspaceList();
+                renderAll();
+            }
+        }
+
+        async function loadPositionsFromAPI() {
+            if (!currentWorkspaceId) return;
+            try {
+                const apiPositions = await apiCall('GET', `/workspaces/${currentWorkspaceId}/positions`);
+                if (!apiPositions) return;
+
+                positions = await Promise.all(apiPositions.map(async p => {
+                    const candidates = await apiCall('GET', `/positions/${p.id}/candidates`) || [];
+                    return {
+                        id: p.id,
+                        _apiId: p.id,
+                        name: p.name,
+                        description: p.description,
+                        color: p.color,
+                        collapsed: p.isCollapsed,
+                        isActive: p.isActive,
+                        columns: (p.columns || []).map(c => ({
+                            id: c.id, _apiId: c.id, name: c.name, type: c.type,
+                            fixed: c.isFixed, visible: c.isVisible, sortOrder: c.sortOrder,
+                        })),
+                        customStatuses: (p.customStatuses || []).map(s => ({
+                            id: s.id, name: s.name, colorClass: s.colorClass,
+                        })),
+                        candidates: candidates.map(c => ({
+                            id: c.id, _apiId: c.id,
+                            data: c.data || {},
+                            _files: c.files || [],
+                        })),
+                        nextCandidateId: 1,
+                        nextColumnId: 1,
+                    };
+                }));
+
+                const ws = getCurrentWorkspace();
+                if (ws) ws.positions = positions;
+            } catch (err) {
+                console.error('[loadPositionsFromAPI]', err);
+            }
+        }
+
+        // ========================================
+        // WORKSPACE MANAGEMENT
+        // ========================================
+
+        let workspaces = [];
+        let currentWorkspaceId = null;
+        let nextWorkspaceId = 1;
+        const WORKSPACES_STORAGE_KEY = 'recruitment_scoreboard_workspaces';
+
+        // Initialize workspaces
+        // Migrate old data to new workspace format
+        function migrateOldData() {
+            const oldData = localStorage.getItem(STORAGE_KEY);
+            if (oldData) {
+                try {
+                    const data = JSON.parse(oldData);
+                    if (data.positions && Array.isArray(data.positions) && data.positions.length > 0) {
+                        console.log('Found old data with', data.positions.length, 'positions. Migrating...');
+
+                        // Create workspace from old data
+                        const migratedWorkspace = {
+                            id: 1,
+                            name: 'Recruitment Scoreboard',
+                            description: 'Recovered data from previous session',
+                            icon: '👥',
+                            color: '#1890ff',
+                            positions: data.positions,
+                            nextPositionId: data.nextPositionId || data.positions.length + 1,
+                            createdAt: new Date().toISOString()
+                        };
+
+                        workspaces = [migratedWorkspace];
+                        nextWorkspaceId = 2;
+                        currentWorkspaceId = 1;
+
+                        // Save to new format
+                        saveWorkspaces();
+
+                        // Keep old data as backup
+                        localStorage.setItem(STORAGE_KEY + '_backup', oldData);
+
+                        console.log('✅ Migration complete! Data recovered with', data.positions.length, 'positions');
+
+                        return true;
+                    }
+                } catch (error) {
+                    console.error('Error migrating old data:', error);
+                }
+            }
+            return false;
+        }
+
+        function initializeWorkspaces() {
+            const saved = localStorage.getItem(WORKSPACES_STORAGE_KEY);
+            if (saved) {
+                try {
+                    const data = JSON.parse(saved);
+                    workspaces = data.workspaces || [];
+                    nextWorkspaceId = data.nextWorkspaceId || workspaces.length + 1;
+                    currentWorkspaceId = data.currentWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
+                    console.log('Loaded workspaces:', workspaces.length);
+                } catch (error) {
+                    console.error('Error loading workspaces:', error);
+                }
+            }
+
+            // Try to migrate old data if no workspaces exist
+            if (workspaces.length === 0) {
+                console.log('No workspaces found, checking for old data...');
+                const migrated = migrateOldData();
+
+                // If no migration happened, create default workspace
+                if (!migrated) {
+                    console.log('No old data found, creating default workspace');
+                    workspaces.push({
+                        id: nextWorkspaceId++,
+                        name: 'Recruitment Scoreboard',
+                        description: 'Main recruitment tracking board',
+                        icon: '👥',
+                        color: '#1890ff',
+                        positions: [],
+                        nextPositionId: 1,
+                        createdAt: new Date().toISOString()
+                    });
+                    currentWorkspaceId = workspaces[0].id;
+                    saveWorkspaces();
+                } else {
+                    showNotification('✅ Your data has been recovered!', 5000);
+                }
+            }
+        }
+
+        // Save workspaces to localStorage
+        function saveWorkspaces() {
+            const data = {
+                workspaces: workspaces,
+                nextWorkspaceId: nextWorkspaceId,
+                currentWorkspaceId: currentWorkspaceId,
+                timestamp: new Date().toISOString()
+            };
+            localStorage.setItem(WORKSPACES_STORAGE_KEY, JSON.stringify(data));
+            console.log('Workspaces saved');
+        }
+
+        // Get current workspace
+        function getCurrentWorkspace() {
+            return workspaces.find(w => w.id === currentWorkspaceId);
+        }
+
+        // Switch workspace
+        async function switchWorkspace(workspaceId) {
+            currentWorkspaceId = workspaceId;
+            saveWorkspaces();
+            renderWorkspaceList();
+            if (isAuthenticated()) {
+                await loadPositionsFromAPI();
+            } else {
+                loadWorkspaceData();
+            }
+            renderAll();
+        }
+
+        // Render workspace list in sidebar
+        function renderWorkspaceList() {
+            const container = document.getElementById('workspaceList');
+            if (!container) return;
+
+            container.innerHTML = workspaces.map(workspace => {
+                const isActive = workspace.id === currentWorkspaceId;
+                const positionCount = workspace.positions?.length || 0;
+                const candidateCount = workspace.positions?.reduce((sum, p) => sum + (p.candidates?.length || 0), 0) || 0;
+
+                return `
+                    <div class="workspace-item ${isActive ? 'active' : ''}" onclick="switchWorkspace(${workspace.id})">
+                        <div class="workspace-icon" style="background: ${workspace.color};">
+                            ${workspace.icon || '📋'}
+                        </div>
+                        <div class="workspace-info">
+                            <div class="workspace-name">${workspace.name}</div>
+                            <div class="workspace-meta">${positionCount} position${positionCount !== 1 ? 's' : ''} · ${candidateCount} candidate${candidateCount !== 1 ? 's' : ''}</div>
+                        </div>
+                        <div class="workspace-actions">
+                            <button class="workspace-action-btn" onclick="event.stopPropagation(); renameWorkspace(${workspace.id})" title="Rename">
+                                ✏️
+                            </button>
+                            <button class="workspace-action-btn" onclick="event.stopPropagation(); deleteWorkspace(${workspace.id})" title="Delete">
+                                🗑️
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+
+            // Update header
+            const currentWorkspace = getCurrentWorkspace();
+            if (currentWorkspace) {
+                document.getElementById('currentWorkspaceName').textContent =
+                    `${currentWorkspace.icon} ${currentWorkspace.name}`;
+            }
+        }
+
+        // Create new workspace
+        function createWorkspace() {
+            const name = document.getElementById('newWorkspaceName').value.trim();
+            const description = document.getElementById('newWorkspaceDescription').value.trim();
+            const icon = document.getElementById('selectedWorkspaceIcon').value;
+            const color = document.getElementById('newWorkspaceColor').value;
+
+            if (!name) {
+                alert('⚠️ Please enter a workspace name');
+                return;
+            }
+
+            const newWorkspace = {
+                id: nextWorkspaceId++,
+                name: name,
+                description: description,
+                icon: icon,
+                color: color,
+                positions: [],
+                nextPositionId: 1,
+                createdAt: new Date().toISOString()
+            };
+
+            workspaces.push(newWorkspace);
+            currentWorkspaceId = newWorkspace.id;
+            saveWorkspaces();
+
+            // Clear form
+            document.getElementById('newWorkspaceName').value = '';
+            document.getElementById('newWorkspaceDescription').value = '';
+            document.getElementById('selectedWorkspaceIcon').value = '👥';
+            document.querySelectorAll('.icon-selector').forEach(btn => btn.classList.remove('selected'));
+            document.querySelector('.icon-selector[data-icon="👥"]').classList.add('selected');
+
+            hideModal('newWorkspaceModal');
+            renderWorkspaceList();
+            loadWorkspaceData();
+            renderAll();
+            showNotification(`✅ Workspace "${name}" created!`);
+
+            // Sync to API
+            if (isAuthenticated()) {
+                syncToApi(
+                    apiCall('POST', '/workspaces', { name, description, icon, color })
+                    .then(created => { if (created) { newWorkspace._apiId = created.id; } })
+                );}
+
+        }
+
+        // Select workspace icon
+        function selectWorkspaceIcon(icon, event) {
+            document.getElementById('selectedWorkspaceIcon').value = icon;
+            document.querySelectorAll('.icon-selector').forEach(btn => btn.classList.remove('selected'));
+            event.target.classList.add('selected');
+        }
+
+        // Rename workspace
+        function renameWorkspace(workspaceId) {
+            const workspace = workspaces.find(w => w.id === workspaceId);
+            if (!workspace) return;
+
+            const newName = prompt(`Rename workspace:`, workspace.name);
+            if (newName && newName.trim()) {
+                workspace.name = newName.trim();
+                saveWorkspaces();
+                renderWorkspaceList();
+                showNotification('✅ Workspace renamed');
+                if (isAuthenticated() && workspace._apiId) {
+                    syncToApi(apiCall('PUT', `/workspaces/${workspace._apiId}`, { name: workspace.name }));
+                }
+            }
+        }
+
+        // Delete workspace
+        function deleteWorkspace(workspaceId) {
+            if (workspaces.length === 1) {
+                alert('⚠️ Cannot delete the last workspace');
+                return;
+            }
+
+            const workspace = workspaces.find(w => w.id === workspaceId);
+            if (!workspace) return;
+
+            if (!confirm(`Delete workspace "${workspace.name}"?\n\nThis will delete all positions and candidates in this workspace. This cannot be undone.`)) {
+                return;
+            }
+
+            const apiId = workspace._apiId;
+            workspaces = workspaces.filter(w => w.id !== workspaceId);
+
+            // Switch to first remaining workspace if current was deleted
+            if (currentWorkspaceId === workspaceId) {
+                currentWorkspaceId = workspaces[0].id;
+            }
+
+            saveWorkspaces();
+            renderWorkspaceList();
+            loadWorkspaceData();
+            renderAll();
+            showNotification('✅ Workspace deleted');
+            if (isAuthenticated() && apiId) {
+                syncToApi(apiCall('DELETE', `/workspaces/${apiId}`));
+            }
+        }
+
+        // Load workspace data
+        function loadWorkspaceData() {
+            const workspace = getCurrentWorkspace();
+            if (workspace) {
+                positions = workspace.positions || [];
+
+                // Ensure all positions have customStatuses array and isActive property (backward compatibility)
+                positions.forEach(pos => {
+                    if (!pos.customStatuses) {
+                        pos.customStatuses = [];
+                    }
+                    if (pos.isActive === undefined) {
+                        pos.isActive = false;
+                    }
+                });
+
+                nextPositionId = workspace.nextPositionId || 1;
+            } else {
+                positions = [];
+                nextPositionId = 1;
+            }
+        }
+
+        // Save workspace data
+        function saveWorkspaceData() {
+            const workspace = getCurrentWorkspace();
+            if (workspace) {
+                workspace.positions = positions;
+                workspace.nextPositionId = nextPositionId;
+                saveWorkspaces();
+            }
+        }
+
+        // Toggle position active status
+        function togglePositionActive(positionId) {
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            position.isActive = !position.isActive;
+            saveWorkspaceData();
+            renderAll();
+            if (isAuthenticated() && position._apiId && currentWorkspaceId) {
+                syncToApi(apiCall('PATCH', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/toggle-active`));
+            }
+
+            showNotification(position.isActive
+                ? `✅ ${position.name} marked as Active`
+                : `${position.name} marked as Inactive`
+            );
+        }
+
+        // ========================================
+        // FEEDBACK REMINDER SYSTEM
+        // ========================================
+
+        let _reminderContext = null;
+
+        function showReminderModal(event, positionId, candidateId) {
+            event.stopPropagation();
+
+            const position = positions.find(p => p.id === positionId);
+            const candidate = position && position.candidates.find(c => c.id === candidateId);
+            if (!position || !candidate) return;
+
+            _reminderContext = { position, candidate };
+
+            // Fill in candidate and position info
+            document.getElementById('reminderCandidateName').textContent = candidate.data['Name'] || 'Unknown';
+            document.getElementById('reminderPositionName').textContent = position.name || 'Unknown';
+
+            // Pre-fill message
+            const candidateName = candidate.data['Name'] || 'the candidate';
+            const positionName  = position.name || 'this position';
+            document.getElementById('reminderEmailBody').value =
+                `Hey,\n\nIt's time to provide feedback for ${candidateName} (${positionName}).\n\nPlease log in to the Recruitment Scoreboard and share your evaluation at your earliest convenience.\n\nThank you!`;
+
+            // Clear previous email / error
+            document.getElementById('reminderEmailInput').value = '';
+            document.getElementById('emailError').style.display = 'none';
+
+            showModal('reminderModal');
+        }
+
+        function closeReminderModal() {
+            hideModal('reminderModal');
+            _reminderContext = null;
+        }
+
+        function sendReminder() {
+            const emailInput = document.getElementById('reminderEmailInput');
+            const body       = document.getElementById('reminderEmailBody').value.trim();
+            const email      = emailInput.value.trim();
+            const errorEl    = document.getElementById('emailError');
+
+            // Validate email
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!email || !emailRegex.test(email)) {
+                errorEl.style.display = 'block';
+                emailInput.style.borderColor = '#ff4d4f';
+                emailInput.focus();
+                return;
+            }
+            errorEl.style.display = 'none';
+            emailInput.style.borderColor = '#d9d9d9';
+
+            const candidateName = _reminderContext
+                ? (_reminderContext.candidate.data['Name'] || 'the candidate')
+                : 'the candidate';
+
+            const subject     = encodeURIComponent(`Feedback Reminder – ${candidateName}`);
+            const bodyEncoded = encodeURIComponent(body);
+
+            // Open Gmail compose directly in a new tab
+            const gmailUrl = `https://mail.google.com/mail/?view=cm&to=${encodeURIComponent(email)}&su=${subject}&body=${bodyEncoded}`;
+            window.open(gmailUrl, '_blank');
+
+            closeReminderModal();
+            showNotification(`✅ Gmail opened — reminder ready to send to ${email}`);
+        }
+
+        // Close reminder modal when clicking backdrop
+        document.getElementById('reminderModal').addEventListener('click', function(e) {
+            if (e.target === this) closeReminderModal();
+        });
+
+        // Also allow Enter key to submit email
+        document.getElementById('reminderEmailInput').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') sendReminder();
+        });
+
+        // ========================================
+        // ORIGINAL DATA STRUCTURE (Now per workspace)
+        // ========================================
+
+        // Data structure
+        let positions = [
+            {
+                id: 1,
+                name: 'Software Engineer',
+                description: 'Full-stack software engineering position',
+                color: '#1890ff',
+                collapsed: false,
+                columns: [
+                    { id: 1, name: 'Name', type: 'text', fixed: true, visible: true },
+                    { id: 2, name: 'Email', type: 'email', fixed: true, visible: false },
+                    { id: 3, name: 'Phone', type: 'phone', fixed: true, visible: false },
+                    { id: 4, name: 'Status', type: 'status', visible: true },
+                    { id: 5, name: 'Interview Date', type: 'date', visible: true },
+                    { id: 6, name: 'Resume', type: 'file', visible: true },
+                    { id: 7, name: 'Technical Score', type: 'percentage', visible: true },
+                    { id: 8, name: 'Feedback', type: 'text', visible: true }
+                ],
+                candidates: [
+                    {
+                        id: 1,
+                        data: {
+                            'Name': 'John Doe',
+                            'Email': 'john.doe@email.com',
+                            'Phone': '+1 (555) 123-4567',
+                            'Status': 'Shortlisted',
+                            'Interview Date': '2024-02-20',
+                            'Resume': 'resume.pdf',
+                            'Technical Score': 85,
+                            'Feedback': 'Strong candidate with great problem-solving skills'
+                        }
+                    },
+                    {
+                        id: 2,
+                        data: {
+                            'Name': 'Sarah Smith',
+                            'Email': 'sarah.smith@email.com',
+                            'Phone': '+1 (555) 234-5678',
+                            'Status': 'Interview',
+                            'Interview Date': '2024-02-22',
+                            'Resume': 'resume.pdf, cover_letter.pdf',
+                            'Technical Score': 78,
+                            'Feedback': 'Good communication skills, needs more technical depth'
+                        }
+                    }
+                ],
+                nextCandidateId: 3,
+                nextColumnId: 9
+            },
+            {
+                id: 2,
+                name: 'QA Lead',
+                description: 'Quality Assurance team lead position',
+                color: '#52c41a',
+                collapsed: false,
+                columns: [
+                    { id: 1, name: 'Name', type: 'text', fixed: true, visible: true },
+                    { id: 2, name: 'Email', type: 'email', fixed: true, visible: false },
+                    { id: 3, name: 'Phone', type: 'phone', fixed: true, visible: false },
+                    { id: 4, name: 'Status', type: 'status', visible: true },
+                    { id: 5, name: 'Interview Date', type: 'date', visible: true },
+                    { id: 6, name: 'Experience (Years)', type: 'number', visible: true },
+                    { id: 7, name: 'Test Score', type: 'percentage', visible: true }
+                ],
+                candidates: [
+                    {
+                        id: 1,
+                        data: {
+                            'Name': 'Michael Chen',
+                            'Email': 'm.chen@email.com',
+                            'Phone': '+1 (555) 345-6789',
+                            'Status': 'Offered',
+                            'Interview Date': '2024-02-18',
+                            'Experience (Years)': 8,
+                            'Test Score': 92
+                        }
+                    }
+                ],
+                nextCandidateId: 2,
+                nextColumnId: 8
+            }
+        ];
+
+        let nextPositionId = 3;
+
+        function renderAll() {
+            const container = document.getElementById('positionsContainer');
+            container.innerHTML = '';
+
+            if (positions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No positions yet. Click "Add New Position" to get started!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            positions.forEach(position => {
+                container.appendChild(createPositionGroup(position));
+            });
+        }
+
+        function createPositionGroup(position) {
+            const group = document.createElement('div');
+            group.className = 'position-group';
+            group.id = `position-${position.id}`;
+
+            const header = document.createElement('div');
+            header.className = `position-header ${position.collapsed ? 'collapsed' : ''}`;
+            header.style.borderLeftColor = position.color;
+            header.innerHTML = `
+                <span class="collapse-icon ${position.collapsed ? 'collapsed' : ''}" onclick="togglePosition(${position.id})">▼</span>
+                <span class="position-name">
+                    ${position.isActive ? '⭐ ' : ''}${position.name}
+                    ${position.isActive ? '<span class="active-badge">Active</span>' : ''}
+                </span>
+                <span class="position-count">${position.candidates.length} candidate${position.candidates.length !== 1 ? 's' : ''}</span>
+                <div class="position-actions">
+                    <button class="btn-toggle-active ${position.isActive ? 'active' : ''}"
+                            onclick="event.stopPropagation(); togglePositionActive(${position.id})">
+                        ${position.isActive ? '✓ Active' : 'Mark Active'}
+                    </button>
+                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); deletePosition(${position.id})">🗑️ Delete Position</button>
+                </div>
+            `;
+            group.appendChild(header);
+
+            const content = document.createElement('div');
+            content.className = `position-content ${position.collapsed ? 'collapsed' : ''}`;
+            content.innerHTML = `
+                <div class="table-container">
+                    <table>
+                        <thead>
+                            <tr id="header-${position.id}"></tr>
+                        </thead>
+                        <tbody id="tbody-${position.id}"></tbody>
+                    </table>
+                </div>
+            `;
+            group.appendChild(content);
+
+            // Render table after adding to DOM
+            setTimeout(() => {
+                renderPositionTable(position);
+            }, 0);
+
+            return group;
+        }
+
+        function renderPositionTable(position) {
+            renderTableHeader(position);
+            renderTableBody(position);
+        }
+
+        function renderTableHeader(position) {
+            const header = document.getElementById(`header-${position.id}`);
+            if (!header) return;
+
+            header.innerHTML = '';
+
+            position.columns.filter(col => col.visible !== false).forEach(col => {
+                const th = document.createElement('th');
+                th.style.position = 'relative';
+
+                if (col.fixed) {
+                    th.innerHTML = `<div class="column-header">${col.name}</div>`;
+                } else {
+                    th.innerHTML = `
+                        <div class="column-header">
+                            <span class="column-name-text" ondblclick="editColumnNameInline(${position.id}, ${col.id}, event)" style="cursor: pointer;" title="Double-click to edit">${col.name}</span>
+                            <span class="column-menu-icon" onclick="toggleColumnMenu(${position.id}, ${col.id}, event)">⋮</span>
+                            <div class="column-dropdown" id="dropdown-${position.id}-${col.id}">
+                                <div class="dropdown-item" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => editColumnName(${position.id}, ${col.id}, {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">✏️ Edit name</div>
+                                <div class="dropdown-item" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => duplicateColumn(${position.id}, ${col.id}, {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">📋 Duplicate column</div>
+                                <div class="dropdown-item danger" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => removeColumn(${position.id}, ${col.id}, {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">🗑️ Delete column</div>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                header.appendChild(th);
+            });
+
+            // Add "+" button column
+            const addColTh = document.createElement('th');
+            addColTh.style.width = '60px';
+            addColTh.style.textAlign = 'center';
+            addColTh.innerHTML = `<button class="add-column-btn" onclick="showQuickAddColumn(${position.id}, event)" title="Add Column">➕</button>`;
+            header.appendChild(addColTh);
+
+            const actionTh = document.createElement('th');
+            actionTh.textContent = 'Actions';
+            header.appendChild(actionTh);
+        }
+
+        function renderTableBody(position) {
+            const tbody = document.getElementById(`tbody-${position.id}`);
+            if (!tbody) return;
+
+            tbody.innerHTML = '';
+
+            // Render existing candidates
+            position.candidates.forEach(candidate => {
+                const tr = document.createElement('tr');
+
+                position.columns.filter(col => col.visible !== false).forEach(col => {
+                    const td = document.createElement('td');
+                    const value = candidate.data[col.name] || '';
+                    td.innerHTML = renderCell(col.type, value, col.name, position, candidate);
+
+                    // Make cells editable (email/phone are hidden, file type has its own handlers)
+                    if (col.type !== 'file' && col.type !== 'email' && col.type !== 'phone') {
+                        td.style.cursor = 'pointer';
+                        td.onclick = () => makeEditable(position.id, candidate.id, col.name, col.type, td, value);
+                    }
+
+                    tr.appendChild(td);
+                });
+
+                // Empty cell for "+" button column
+                const addColTd = document.createElement('td');
+                tr.appendChild(addColTd);
+
+                const actionTd = document.createElement('td');
+                actionTd.innerHTML = `
+                    <button class="action-btn" onclick="viewCandidate(${position.id}, ${candidate.id})">View</button>
+                    <button class="action-btn danger" onclick="deleteCandidate(${position.id}, ${candidate.id})">Delete</button>
+                `;
+                tr.appendChild(actionTd);
+
+                tbody.appendChild(tr);
+            });
+
+            // Add "Add Candidate" row at the bottom (like Monday.com)
+            const addRow = document.createElement('tr');
+            addRow.style.background = '#fafafa';
+            const visibleColumnsCount = position.columns.filter(col => col.visible !== false).length;
+            const totalColumns = visibleColumnsCount + 2; // +2 for "+" column and Actions column
+
+            const addTd = document.createElement('td');
+            addTd.colSpan = totalColumns;
+            addTd.style.padding = '12px 16px';
+            addTd.innerHTML = `
+                <button onclick="showAddCandidate(${position.id})" style="
+                    background: none;
+                    border: none;
+                    color: #1890ff;
+                    cursor: pointer;
+                    font-size: 14px;
+                    font-weight: 500;
+                    display: flex;
+                    align-items: center;
+                    gap: 8px;
+                    padding: 4px 0;
+                ">
+                    ➕ Add Candidate
+                </button>
+            `;
+            addRow.appendChild(addTd);
+            tbody.appendChild(addRow);
+        }
+
+        function renderCell(type, value, columnName, position = null, candidate = null) {
+            // Special handling for missing feedback in active positions
+            // Check if column name contains "feedback" (case-insensitive) and is a text column
+            if (position && position.isActive && candidate && type === 'text' &&
+                columnName && columnName.toLowerCase().includes('feedback')) {
+                if (!value || value.trim() === '') {
+                    return `
+                        <div class="missing-feedback-cell">
+                            <div class="missing-feedback-alert">
+                                ⚠️ Feedback missing
+                            </div>
+                            <button class="btn-send-reminder"
+                                    onclick="event.stopPropagation(); showReminderModal(event, ${position.id}, ${candidate.id})">
+                                🔔 Send Reminder
+                            </button>
+                        </div>
+                    `;
+                }
+            }
+
+            switch(type) {
+                case 'text':
+                    if (columnName === 'Name') {
+                        return `<strong>${value}</strong>`;
+                    }
+                    return value || '-';
+
+                case 'email':
+                case 'phone':
+                    return value || '-';
+
+                case 'status':
+                    if (!value) return '-';
+
+                    // Default status colors
+                    const defaultStatusColors = {
+                        'Shortlisted': 'badge-green',
+                        'Interview': 'badge-blue',
+                        'Offered': 'badge-purple',
+                        'Rejected': 'badge-red',
+                        'New': 'badge-orange'
+                    };
+
+                    // Check if it's a default status
+                    let colorClass = defaultStatusColors[value];
+
+                    // If not default, look for custom status color
+                    if (!colorClass) {
+                        // Search through all positions to find the custom status
+                        for (const pos of positions) {
+                            if (pos.customStatuses) {
+                                const customStatus = pos.customStatuses.find(cs => cs.name === value);
+                                if (customStatus) {
+                                    colorClass = customStatus.colorClass;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    // Fallback to blue if still not found
+                    if (!colorClass) {
+                        colorClass = 'badge-blue';
+                    }
+
+                    return `<span class="badge ${colorClass}">${value}</span>`;
+
+                case 'date':
+                    return value || '-';
+
+                case 'file':
+                    if (!value) return `<button class="btn btn-sm btn-secondary" onclick="showFileUpload(event, '${columnName}')" style="font-size: 12px; padding: 4px 8px;">📤 Upload</button>`;
+
+                    // Handle new format (object with file data)
+                    if (typeof value === 'object' && value.name) {
+                        const fileSizeKB = (value.size / 1024).toFixed(1);
+                        return `
+                            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                                <span class="file-tag" style="cursor: pointer;" title="${value.name} (${fileSizeKB} KB)">
+                                    📄 ${value.name.length > 20 ? value.name.substring(0, 17) + '...' : value.name}
+                                </span>
+                                <button class="action-btn" onclick="viewFile(event, '${columnName}')" style="font-size: 12px;">👁️ View</button>
+                                <button class="action-btn" onclick="downloadFile(event, '${columnName}')" style="font-size: 12px;">📥 Download</button>
+                                <button class="action-btn danger" onclick="deleteFile(event, '${columnName}')" style="font-size: 12px;">🗑️</button>
+                            </div>
+                        `;
+                    }
+
+                    // Handle old format (plain text) - for backward compatibility
+                    if (typeof value === 'string') {
+                        const files = value.split(', ');
+                        return files.map(f => `<span class="file-tag">📄 ${f}</span>`).join('');
+                    }
+
+                    return '-';
+
+                case 'number':
+                    return value || '0';
+
+                case 'percentage':
+                    if (!value) return '-';
+                    const percent = parseInt(value);
+                    let fillClass = 'progress-fill';
+                    if (percent < 60) fillClass += ' low';
+                    else if (percent < 80) fillClass += ' medium';
+                    return `
+                        <div class="progress-container">
+                            <span style="font-size: 13px;">${percent}%</span>
+                            <div class="progress-bar">
+                                <div class="${fillClass}" style="width: ${percent}%"></div>
+                            </div>
+                        </div>
+                    `;
+
+                default:
+                    return value || '-';
+            }
+        }
+
+        function togglePosition(positionId) {
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            position.collapsed = !position.collapsed;
+            renderAll();
+        }
+
+        function createPosition() {
+            const name = document.getElementById('newPositionName').value.trim();
+            const description = document.getElementById('newPositionDesc').value.trim();
+            const color = document.getElementById('newPositionColor').value;
+
+            if (!name) {
+                alert('⚠️ Please enter a position name');
+                return;
+            }
+
+            const newPosition = {
+                id: nextPositionId++,
+                name: name,
+                description: description,
+                color: color,
+                collapsed: false,
+                isActive: false,
+                columns: [
+                    { id: 1, name: 'Name', type: 'text', fixed: true, visible: true },
+                    { id: 2, name: 'Email', type: 'email', fixed: true, visible: false },
+                    { id: 3, name: 'Phone', type: 'phone', fixed: true, visible: false },
+                    { id: 4, name: 'Status', type: 'status', visible: true }
+                ],
+                candidates: [],
+                nextCandidateId: 1,
+                nextColumnId: 5,
+                customStatuses: []
+            };
+
+            positions.push(newPosition);
+
+            document.getElementById('newPositionName').value = '';
+            document.getElementById('newPositionDesc').value = '';
+
+            hideModal('newPositionModal');
+            renderAll();
+            showNotification(`✅ Position "${name}" created!`);
+
+            // Sync to API
+            if (isAuthenticated() && currentWorkspaceId) {
+                syncToApi(
+                    apiCall('POST', `/workspaces/${currentWorkspaceId}/positions`, { name, description, color })
+                    .then(created => { if (created) newPosition._apiId = created.id; })
+                );
+            }
+        }
+
+        function deletePosition(positionId) {
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            if (!confirm(`Are you sure you want to delete the "${position.name}" position? All candidates and data will be lost.`)) {
+                return;
+            }
+
+            const posApiId = position._apiId;
+            positions = positions.filter(p => p.id !== positionId);
+            renderAll();
+            showNotification(`✅ Position "${position.name}" deleted`);
+            if (isAuthenticated() && posApiId && currentWorkspaceId) {
+                syncToApi(apiCall('DELETE', `/workspaces/${currentWorkspaceId}/positions/${posApiId}`));
+            }
+        }
+
+        function showAddCandidate(positionId) {
+            document.getElementById('candidatePositionId').value = positionId;
+            showModal('candidateModal');
+        }
+
+        function addCandidate() {
+            const positionId = parseInt(document.getElementById('candidatePositionId').value);
+            const name = document.getElementById('candidateName').value.trim();
+            const email = document.getElementById('candidateEmail').value.trim();
+            const phone = document.getElementById('candidatePhone').value.trim();
+            const resumeFile = document.getElementById('candidateResume').files[0];
+
+            if (!name) {
+                alert('⚠️ Please enter candidate name');
+                return;
+            }
+
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            const newCandidate = {
+                id: position.nextCandidateId++,
+                data: {
+                    'Name': name,
+                    'Email': email,
+                    'Phone': phone
+                }
+            };
+
+            position.candidates.push(newCandidate);
+
+            // Clear form
+            document.getElementById('candidateName').value = '';
+            document.getElementById('candidateEmail').value = '';
+            document.getElementById('candidatePhone').value = '';
+            document.getElementById('candidateResume').value = '';
+
+            hideModal('candidateModal');
+            renderAll();
+            showNotification(`✅ Candidate "${name}" added to ${position.name}!`);
+
+            // Sync to API
+            if (isAuthenticated() && position._apiId) {
+                syncToApi(
+                    apiCall('POST', `/positions/${position._apiId}/candidates`, { name, email, phone })
+                    .then(created => {
+                        if (!created) return;
+                        newCandidate._apiId = created.id;
+                        // Upload resume if provided
+                        if (resumeFile) {
+                            const resumeCol = position.columns.find(c => c.name === 'Resume');
+                            const rColId = resumeCol?._apiId || resumeCol?.id;
+                            if (rColId) {
+                                apiUploadFile(resumeFile, created.id, rColId).then(fileRec => {
+                                    if (fileRec) {
+                                        newCandidate._files = newCandidate._files || [];
+                                        newCandidate._files.push(fileRec);
+                                    }
+                                }).catch(console.warn);
+                            }
+                        }
+                    })
+                );
+            }
+        }
+
+        function deleteCandidate(positionId, candidateId) {
+            if (!confirm('Are you sure you want to delete this candidate?')) {
+                return;
+            }
+
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            const candApiId = position.candidates.find(c => c.id === candidateId)?._apiId;
+            position.candidates = position.candidates.filter(c => c.id !== candidateId);
+            renderAll();
+            if (isAuthenticated() && position._apiId && candApiId) {
+                syncToApi(apiCall('DELETE', `/positions/${position._apiId}/candidates/${candApiId}`));
+            }
+        }
+
+        function viewCandidate(positionId, candidateId) {
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            const candidate = position.candidates.find(c => c.id === candidateId);
+            if (!candidate) return;
+
+            const name = candidate.data['Name'] || 'N/A';
+            const email = candidate.data['Email'] || 'Not provided';
+            const phone = candidate.data['Phone'] || 'Not provided';
+
+            const modal = document.createElement('div');
+            modal.className = 'modal active';
+            modal.innerHTML = `
+                <div class="modal-content" style="max-width: 500px;">
+                    <div class="modal-header">👤 Candidate Contact Information</div>
+                    <div style="padding: 20px 0;">
+                        <div style="text-align: center; margin-bottom: 24px;">
+                            <div style="width: 80px; height: 80px; background: ${position.color}; border-radius: 50%; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; font-size: 36px; color: white;">
+                                ${name.charAt(0).toUpperCase()}
+                            </div>
+                            <h3 style="margin: 0; font-size: 20px; font-weight: 600;">${name}</h3>
+                            <p style="color: #999; margin-top: 4px;">${position.name}</p>
+                        </div>
+                        <div style="background: #f5f5f5; padding: 16px; border-radius: 8px; margin-bottom: 12px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 20px;">📧</span>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Email Address</div>
+                                    <div style="font-weight: 500; color: #1890ff;">
+                                        ${email !== 'Not provided' ? `<a href="mailto:${email}" style="color: #1890ff; text-decoration: none;">${email}</a>` : email}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="background: #f5f5f5; padding: 16px; border-radius: 8px;">
+                            <div style="display: flex; align-items: center; gap: 12px;">
+                                <span style="font-size: 20px;">📞</span>
+                                <div style="flex: 1;">
+                                    <div style="font-size: 12px; color: #999; margin-bottom: 4px;">Phone Number</div>
+                                    <div style="font-weight: 500; color: #52c41a;">
+                                        ${phone !== 'Not provided' ? `<a href="tel:${phone}" style="color: #52c41a; text-decoration: none;">${phone}</a>` : phone}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-primary" onclick="this.closest('.modal').remove()">Close</button>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.remove();
+                }
+            });
+        }
+
+        function showQuickAddColumn(positionId, event) {
+            event.stopPropagation();
+            document.getElementById('columnPositionId').value = positionId;
+            document.getElementById('newColumnName').value = '';
+            document.getElementById('newColumnType').value = 'text';
+            showModal('addColumnModal');
+        }
+
+        function addNewColumn() {
+            const positionId = parseInt(document.getElementById('columnPositionId').value);
+            const columnName = document.getElementById('newColumnName').value.trim();
+            const columnType = document.getElementById('newColumnType').value;
+
+            if (!columnName) {
+                alert('⚠️ Please enter a column name');
+                return;
+            }
+
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            // Check if column name already exists
+            if (position.columns.some(c => c.name === columnName)) {
+                alert('⚠️ A column with this name already exists');
+                return;
+            }
+
+            // Create new column
+            const newColumn = {
+                id: position.nextColumnId++,
+                name: columnName,
+                type: columnType,
+                visible: true,
+                fixed: false
+            };
+
+            position.columns.push(newColumn);
+
+            // Initialize empty values for all candidates
+            position.candidates.forEach(candidate => {
+                if (!candidate.data[columnName]) {
+                    candidate.data[columnName] = '';
+                }
+            });
+
+            hideModal('addColumnModal');
+            saveWorkspaceData();
+            renderAll();
+            showNotification(`✅ Column "${columnName}" added!`);
+        }
+
+        function toggleColumnMenu(positionId, columnId, event) {
+            event.stopPropagation();
+            const dropdown = document.getElementById(`dropdown-${positionId}-${columnId}`);
+            if (!dropdown) return;
+
+            closeAllColumnMenus();
+            dropdown.classList.toggle('active');
+        }
+
+        function closeAllColumnMenus() {
+            const allDropdowns = document.querySelectorAll('.column-dropdown');
+            allDropdowns.forEach(d => d.classList.remove('active'));
+        }
+
+        function handleDropdownAction(event, action, positionId, columnId) {
+            console.log('handleDropdownAction called:', action, positionId, columnId);
+            event.preventDefault();
+            event.stopPropagation();
+
+            // Close dropdown immediately
+            closeAllColumnMenus();
+
+            // Execute action after a small delay to ensure dropdown closes
+            setTimeout(() => {
+                console.log('Executing action:', action);
+                // Create a mock event object since the original event is stale
+                const mockEvent = {
+                    stopPropagation: () => {},
+                    preventDefault: () => {}
+                };
+
+                switch(action) {
+                    case 'edit':
+                        editColumnName(positionId, columnId, mockEvent);
+                        break;
+                    case 'duplicate':
+                        duplicateColumn(positionId, columnId, mockEvent);
+                        break;
+                    case 'delete':
+                        removeColumn(positionId, columnId, mockEvent);
+                        break;
+                }
+            }, 50);
+        }
+
+        function editColumnNameInline(positionId, columnId, event) {
+            event.stopPropagation();
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            const column = position.columns.find(c => c.id === columnId);
+            if (!column || column.fixed) return;
+
+            const span = event.target;
+            const oldName = column.name;
+
+            // Create input element
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = oldName;
+            input.style.cssText = 'width: 100%; padding: 4px; border: 2px solid #1890ff; border-radius: 4px; font-size: 14px; font-weight: 600;';
+
+            // Replace span with input
+            span.replaceWith(input);
+            input.focus();
+            input.select();
+
+            // Save on blur or Enter
+            const save = () => {
+                const newName = input.value.trim();
+                if (!newName || newName === oldName) {
+                    renderAll();
+                    return;
+                }
+
+                // Check if name already exists
+                if (position.columns.some(c => c.name === newName && c.id !== columnId)) {
+                    alert('⚠️ A column with this name already exists');
+                    renderAll();
+                    return;
+                }
+
+                // Update column name
+                column.name = newName;
+
+                // Update all candidate data keys
+                position.candidates.forEach(candidate => {
+                    if (candidate.data[oldName] !== undefined) {
+                        candidate.data[newName] = candidate.data[oldName];
+                        delete candidate.data[oldName];
+                    }
+                });
+
+                saveWorkspaceData();
+                renderAll();
+                showNotification(`✅ Column renamed to "${newName}"`);
+            };
+
+            input.onblur = save;
+            input.onkeydown = (e) => {
+                if (e.key === 'Enter') {
+                    save();
+                } else if (e.key === 'Escape') {
+                    renderAll();
+                }
+            };
+        }
+
+        function editColumnName(positionId, columnId, event) {
+            event.stopPropagation();
+            closeAllColumnMenus();
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            const column = position.columns.find(c => c.id === columnId);
+            if (!column || column.fixed) return;
+
+            const newName = prompt(`Edit column name:`, column.name);
+            if (!newName || newName.trim() === '' || newName === column.name) return;
+
+            // Check if new name already exists
+            if (position.columns.some(c => c.name === newName.trim() && c.id !== columnId)) {
+                alert('⚠️ A column with this name already exists');
+                return;
+            }
+
+            const oldName = column.name;
+            column.name = newName.trim();
+
+            // Update all candidate data keys
+            position.candidates.forEach(candidate => {
+                if (candidate.data[oldName] !== undefined) {
+                    candidate.data[newName.trim()] = candidate.data[oldName];
+                    delete candidate.data[oldName];
+                }
+            });
+
+            saveWorkspaceData();
+            renderAll();
+            showNotification(`✅ Column renamed to "${newName.trim()}"`);
+        }
+
+        function duplicateColumn(positionId, columnId, event) {
+            event.stopPropagation();
+            closeAllColumnMenus();
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            const column = position.columns.find(c => c.id === columnId);
+            if (!column) return;
+
+            // Create copy of column
+            const copyName = `${column.name} (Copy)`;
+            const newColumn = {
+                id: position.nextColumnId++,
+                name: copyName,
+                type: column.type,
+                visible: true,
+                fixed: false
+            };
+
+            position.columns.push(newColumn);
+
+            // Copy data from original column to new column for all candidates
+            position.candidates.forEach(candidate => {
+                candidate.data[copyName] = candidate.data[column.name] || '';
+            });
+
+            saveWorkspaceData();
+            renderAll();
+            showNotification(`✅ Column "${copyName}" created!`);
+        }
+
+        function removeColumn(positionId, columnId, event) {
+            console.log('removeColumn called:', positionId, columnId);
+            event.stopPropagation();
+            closeAllColumnMenus();
+
+            const position = positions.find(p => p.id === positionId);
+            if (!position) {
+                console.log('Position not found');
+                return;
+            }
+
+            const column = position.columns.find(c => c.id === columnId);
+            if (!column) {
+                console.log('Column not found');
+                return;
+            }
+            if (column.fixed) {
+                alert('Cannot delete fixed columns (Name, Email, Phone)');
+                return;
+            }
+
+            const confirmed = confirm(`Delete column "${column.name}"? This will remove the column and all its data.`);
+            console.log('Confirmation result:', confirmed);
+            if (!confirmed) return;
+
+            console.log('Deleting column:', column.name);
+            position.columns = position.columns.filter(c => c.id !== columnId);
+            position.candidates.forEach(candidate => {
+                delete candidate.data[column.name];
+            });
+
+            saveWorkspaceData();  // Save changes to localStorage
+            renderAll();
+            showNotification(`✅ Column "${column.name}" deleted`);
+            console.log('Column deleted successfully');
+        }
+
+        function showNotification(message, duration = 3000) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                background: #52c41a;
+                color: white;
+                padding: 12px 20px;
+                border-radius: 6px;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+                z-index: 10000;
+                font-size: 14px;
+                font-weight: 500;
+            `;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.remove();
+            }, duration);
+        }
+
+        function showModal(id) {
+            document.getElementById(id).classList.add('active');
+        }
+
+        function hideModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Close modals when clicking outside
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
+            });
+        });
+
+        // Inline Editing
+        function makeEditable(positionId, candidateId, columnName, columnType, cell, currentValue) {
+            // Prevent double-editing
+            if (cell.querySelector('input') || cell.querySelector('select') || cell.querySelector('textarea')) {
+                return;
+            }
+
+            const position = positions.find(p => p.id === positionId);
+            if (!position) return;
+
+            const candidate = position.candidates.find(c => c.id === candidateId);
+            if (!candidate) return;
+
+            let inputElement;
+
+            // Create appropriate input based on column type
+            switch(columnType) {
+                case 'text':
+                    if (columnName === 'Feedback') {
+                        inputElement = document.createElement('textarea');
+                        inputElement.rows = 3;
+                    } else {
+                        inputElement = document.createElement('input');
+                        inputElement.type = 'text';
+                    }
+                    inputElement.value = currentValue || '';
+                    break;
+
+                case 'date':
+                    inputElement = document.createElement('input');
+                    inputElement.type = 'date';
+                    inputElement.value = currentValue || '';
+                    break;
+
+                case 'number':
+                    inputElement = document.createElement('input');
+                    inputElement.type = 'number';
+                    inputElement.value = currentValue || '0';
+                    break;
+
+                case 'percentage':
+                    inputElement = document.createElement('input');
+                    inputElement.type = 'number';
+                    inputElement.min = '0';
+                    inputElement.max = '100';
+                    inputElement.value = currentValue || '0';
+                    break;
+
+                case 'status':
+                    inputElement = document.createElement('select');
+
+                    // Default statuses
+                    const defaultStatuses = ['New', 'Shortlisted', 'Interview', 'Offered', 'Rejected'];
+
+                    // Get custom statuses from position (with backward compatibility)
+                    const customStatuses = position.customStatuses || [];
+
+                    // Combine all statuses (avoid duplicates)
+                    const allStatuses = [...defaultStatuses];
+                    customStatuses.forEach(cs => {
+                        if (!allStatuses.includes(cs.name)) {
+                            allStatuses.push(cs.name);
+                        }
+                    });
+
+                    // Add all status options
+                    allStatuses.forEach(status => {
+                        const option = document.createElement('option');
+                        option.value = status;
+                        option.textContent = status;
+                        if (status === currentValue) option.selected = true;
+                        inputElement.appendChild(option);
+                    });
+
+                    // Add separator
+                    const separator = document.createElement('option');
+                    separator.disabled = true;
+                    separator.textContent = '──────────';
+                    inputElement.appendChild(separator);
+
+                    // Add "Create new status" option
+                    const createNew = document.createElement('option');
+                    createNew.value = '__create_new__';
+                    createNew.textContent = '➕ Create new status';
+                    createNew.style.color = '#1890ff';
+                    createNew.style.fontWeight = '500';
+                    inputElement.appendChild(createNew);
+
+                    // Handle "Create new status" selection
+                    inputElement.addEventListener('change', (e) => {
+                        if (e.target.value === '__create_new__') {
+                            const newStatus = prompt('Enter new status name:');
+                            if (newStatus && newStatus.trim()) {
+                                const trimmedStatus = newStatus.trim();
+
+                                // Check if status already exists (case-insensitive)
+                                const existsInDefault = defaultStatuses.some(s =>
+                                    s.toLowerCase() === trimmedStatus.toLowerCase()
+                                );
+                                const existsInCustom = customStatuses.some(cs =>
+                                    cs.name.toLowerCase() === trimmedStatus.toLowerCase()
+                                );
+
+                                if (existsInDefault || existsInCustom) {
+                                    showNotification('⚠️ Status already exists!');
+                                    cell.innerHTML = renderCell(columnType, currentValue, columnName);
+                                    cell.style.cursor = 'pointer';
+                                    return;
+                                }
+
+                                // Color pool for automatic color assignment
+                                const colorPool = [
+                                    'badge-blue', 'badge-green', 'badge-purple',
+                                    'badge-orange', 'badge-cyan', 'badge-magenta',
+                                    'badge-yellow', 'badge-lime', 'badge-geekblue', 'badge-red'
+                                ];
+
+                                // Assign color (cycle through pool)
+                                const colorIndex = customStatuses.length % colorPool.length;
+                                const assignedColor = colorPool[colorIndex];
+
+                                // Initialize customStatuses array if it doesn't exist
+                                if (!position.customStatuses) {
+                                    position.customStatuses = [];
+                                }
+
+                                // Add to position's custom statuses with color
+                                position.customStatuses.push({
+                                    name: trimmedStatus,
+                                    colorClass: assignedColor
+                                });
+
+                                // Set the new status on candidate
+                                candidate.data[columnName] = trimmedStatus;
+
+                                // Save to localStorage
+                                saveWorkspaceData();
+
+                                // Re-render cell
+                                cell.innerHTML = renderCell(columnType, trimmedStatus, columnName);
+                                cell.style.cursor = 'pointer';
+
+                                showNotification(`✅ Created and set status: ${trimmedStatus}`);
+
+                                // Sync custom status + value to API
+                                if (isAuthenticated() && position._apiId) {
+                                    syncToApi(
+                                        apiCall('PATCH', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/custom-statuses`, {
+                                            customStatuses: position.customStatuses
+                                        }).then(() => {
+                                            const col = position.columns.find(c => c.name === columnName);
+                                            const colId = col?._apiId || col?.id;
+                                            if (colId && candidate._apiId) {
+                                                return apiCall('PATCH', `/positions/${position._apiId}/candidates/${candidate._apiId}/values`, {
+                                                    values: { [colId]: trimmedStatus }
+                                                });
+                                            }
+                                        })
+                                    );
+                                }
+                            } else {
+                                // Reset to previous value if canceled
+                                cell.innerHTML = renderCell(columnType, currentValue, columnName);
+                                cell.style.cursor = 'pointer';
+                            }
+                        }
+                    });
+                    break;
+
+                default:
+                    inputElement = document.createElement('input');
+                    inputElement.type = 'text';
+                    inputElement.value = currentValue || '';
+            }
+
+            // Style the input
+            inputElement.style.cssText = `
+                width: 100%;
+                padding: 8px;
+                border: 2px solid #1890ff;
+                border-radius: 4px;
+                font-size: 14px;
+                font-family: inherit;
+                outline: none;
+            `;
+
+            // Save on blur or Enter key
+            const saveValue = () => {
+                const newValue = inputElement.value;
+                candidate.data[columnName] = newValue;
+
+                // Re-render the cell
+                cell.innerHTML = renderCell(columnType, newValue, columnName);
+                cell.style.cursor = 'pointer';
+
+                showNotification(`✅ Updated ${columnName}`);
+
+                // Sync to API
+                if (isAuthenticated() && candidate._apiId) {
+                    const col = position.columns.find(c => c.name === columnName);
+                    const colId = col?._apiId || col?.id;
+                    if (colId) {
+                        syncToApi(apiCall('PATCH', `/positions/${position._apiId || position.id}/candidates/${candidate._apiId}/values`, {
+                            values: { [colId]: newValue }
+                        }));
+                    }
+                }
+            };
+
+            inputElement.addEventListener('blur', saveValue);
+            inputElement.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' && columnType !== 'text') {
+                    inputElement.blur();
+                } else if (e.key === 'Escape') {
+                    cell.innerHTML = renderCell(columnType, currentValue, columnName);
+                    cell.style.cursor = 'pointer';
+                }
+            });
+
+            // Replace cell content with input
+            cell.innerHTML = '';
+            cell.appendChild(inputElement);
+            cell.style.cursor = 'default';
+            inputElement.focus();
+            if (inputElement.select) inputElement.select();
+        }
+
+        // Close dropdowns when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('.column-header')) {
+                closeAllColumnMenus();
+            }
+        });
+
+        // Resume Management Functions
+        let currentResumeData = null;
+
+        function showFileUpload(event, columnName) {
+            console.log('showFileUpload called with columnName:', columnName);
+            event.stopPropagation();
+            const cell = event.target.closest('td');
+            if (!cell) {
+                console.error('No cell found');
+                return;
+            }
+
+            // Create file input
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.pdf,.doc,.docx';
+            fileInput.style.display = 'none';
+
+            fileInput.onchange = function(e) {
+                console.log('File selected');
+                const file = e.target.files[0];
+                if (!file) {
+                    console.log('No file selected');
+                    return;
+                }
+
+                console.log('File name:', file.name, 'Size:', file.size, 'Type:', file.type);
+
+                // Check file size (5MB limit)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('⚠️ File is too large. Maximum size is 5MB.');
+                    return;
+                }
+
+                // Get candidate info from cell
+                const row = cell.closest('tr');
+                const tbody = row.closest('tbody');
+                const rowIndex = Array.from(tbody.children).indexOf(row);
+
+                // Find position and candidate
+                const positionId = parseInt(tbody.id.replace('tbody-', ''));
+                const position = positions.find(p => p.id === positionId);
+                console.log('Position:', position, 'Row index:', rowIndex);
+
+                if (!position || rowIndex >= position.candidates.length) {
+                    console.error('Position not found or invalid row index');
+                    return;
+                }
+
+                const candidate = position.candidates[rowIndex];
+                console.log('Candidate:', candidate);
+
+                if (isAuthenticated() && candidate._apiId) {
+                    // API upload path — store metadata only (no base64)
+                    const col = position.columns.find(c => c.name === columnName);
+                    const colId = col?._apiId || col?.id;
+                    if (!colId) { alert('⚠️ Column not found'); return; }
+
+                    apiUploadFile(file, candidate._apiId, colId).then(fileRec => {
+                        candidate._files = candidate._files || [];
+                        // Replace existing file record for this column
+                        candidate._files = candidate._files.filter(f => f.columnId !== colId);
+                        candidate._files.push(fileRec);
+                        // Store lightweight metadata (no base64)
+                        candidate.data[columnName] = { name: fileRec.originalName, type: fileRec.mimeType, size: fileRec.sizeBytes, _fileId: fileRec.id };
+                        saveWorkspaceData();
+                        renderAll();
+                        showNotification(`✅ File uploaded to ${columnName}!`);
+                    }).catch(err => { alert(`⚠️ Upload failed: ${err.message}`); });
+                } else {
+                    // Local fallback — base64 in localStorage
+                    const reader = new FileReader();
+                    reader.onload = function(evt) {
+                        candidate.data[columnName] = { name: file.name, type: file.type, size: file.size, data: evt.target.result };
+                        saveWorkspaceData();
+                        renderAll();
+                        showNotification(`✅ File uploaded to ${columnName}!`);
+                    };
+                    reader.onerror = () => alert('⚠️ Error reading file. Please try again.');
+                    reader.readAsDataURL(file);
+                }
+            };
+
+            // Add to document body before clicking (required by some browsers)
+            document.body.appendChild(fileInput);
+            fileInput.click();
+
+            // Remove after a short delay
+            setTimeout(() => {
+                document.body.removeChild(fileInput);
+            }, 1000);
+        }
+
+        function viewFile(event, columnName) {
+            event.stopPropagation();
+            const cell = event.target.closest('td');
+            if (!cell) return;
+
+            const row = cell.closest('tr');
+            const tbody = row.closest('tbody');
+            const rowIndex = Array.from(tbody.children).indexOf(row);
+
+            const positionId = parseInt(tbody.id.replace('tbody-', ''));
+            const position = positions.find(p => p.id === positionId);
+            if (!position || rowIndex >= position.candidates.length) return;
+
+            const candidate = position.candidates[rowIndex];
+            const fileData = candidate.data[columnName];
+
+            if (!fileData) { alert('⚠️ No file found'); return; }
+
+            // API path — fetch signed URL then open
+            if (isAuthenticated() && fileData._fileId) {
+                apiCall('GET', `/files/${fileData._fileId}/url`).then(res => {
+                    if (!res) return;
+                    currentResumeData = { ...fileData, signedUrl: res.url };
+                    document.getElementById('resumeViewerTitle').textContent = `${columnName}: ${candidate.data['Name']} - ${fileData.name}`;
+                    const content = document.getElementById('resumeViewerContent');
+                    if (fileData.type === 'application/pdf') {
+                        content.innerHTML = `<iframe src="${res.url}" style="width:100%;height:100%;border:none;"></iframe>`;
+                    } else {
+                        content.innerHTML = `<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:16px;">📄</div><h3>${fileData.name}</h3><p style="color:#999;">${fileData.type} · ${(fileData.size/1024).toFixed(1)} KB</p><button class="btn btn-primary" onclick="downloadCurrentResume()">📥 Download File</button></div>`;
+                    }
+                    showModal('resumeViewerModal');
+                }).catch(err => alert(`⚠️ Could not load file: ${err.message}`));
+                return;
+            }
+
+            // Local base64 fallback
+            if (!fileData.data) { alert('⚠️ No file data'); return; }
+            currentResumeData = fileData;
+            document.getElementById('resumeViewerTitle').textContent = `${columnName}: ${candidate.data['Name']} - ${fileData.name}`;
+            const content = document.getElementById('resumeViewerContent');
+            if (fileData.type === 'application/pdf') {
+                content.innerHTML = `<iframe src="${fileData.data}" style="width:100%;height:100%;border:none;"></iframe>`;
+            } else {
+                content.innerHTML = `<div style="text-align:center;padding:60px 20px;"><div style="font-size:48px;margin-bottom:16px;">📄</div><h3>${fileData.name}</h3><p style="color:#999;">${fileData.type} · ${(fileData.size/1024).toFixed(1)} KB</p><button class="btn btn-primary" onclick="downloadCurrentResume()">📥 Download File</button></div>`;
+            }
+            showModal('resumeViewerModal');
+        }
+
+        function downloadFile(event, columnName) {
+            event.stopPropagation();
+            const cell = event.target.closest('td');
+            if (!cell) return;
+
+            const row = cell.closest('tr');
+            const tbody = row.closest('tbody');
+            const rowIndex = Array.from(tbody.children).indexOf(row);
+
+            const positionId = parseInt(tbody.id.replace('tbody-', ''));
+            const position = positions.find(p => p.id === positionId);
+            if (!position || rowIndex >= position.candidates.length) return;
+
+            const candidate = position.candidates[rowIndex];
+            const fileData = candidate.data[columnName];
+            if (!fileData) { alert('⚠️ No file found'); return; }
+
+            if (isAuthenticated() && fileData._fileId) {
+                apiCall('GET', `/files/${fileData._fileId}/url`).then(res => {
+                    if (res) downloadResumeFile({ ...fileData, signedUrl: res.url });
+                }).catch(err => alert(`⚠️ ${err.message}`));
+                return;
+            }
+            if (!fileData.data) { alert('⚠️ No file data'); return; }
+            downloadResumeFile(fileData);
+        }
+
+        function downloadCurrentResume() {
+            if (!currentResumeData) return;
+            const url = currentResumeData.signedUrl || currentResumeData.data;
+            if (!url) { alert('⚠️ No file URL available'); return; }
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = currentResumeData.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showNotification('✅ File downloaded!');
+        }
+
+        function downloadResumeFile(resumeData) {
+            const url = resumeData.signedUrl || resumeData.data;
+            if (!url) return;
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = resumeData.name;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            showNotification('✅ File downloaded!');
+        }
+
+        function deleteFile(event, columnName) {
+            event.stopPropagation();
+
+            if (!confirm(`Are you sure you want to delete this file from ${columnName}?`)) {
+                return;
+            }
+
+            const cell = event.target.closest('td');
+            if (!cell) return;
+
+            const row = cell.closest('tr');
+            const tbody = row.closest('tbody');
+            const rowIndex = Array.from(tbody.children).indexOf(row);
+
+            const positionId = parseInt(tbody.id.replace('tbody-', ''));
+            const position = positions.find(p => p.id === positionId);
+            if (!position || rowIndex >= position.candidates.length) return;
+
+            const candidate = position.candidates[rowIndex];
+            const fileData = candidate.data[columnName];
+            const fileId = fileData?._fileId;
+
+            delete candidate.data[columnName];
+            if (candidate._files) candidate._files = candidate._files.filter(f => f.id !== fileId);
+
+            saveWorkspaceData();
+            renderAll();
+            showNotification(`✅ File deleted from ${columnName}`);
+
+            if (isAuthenticated() && fileId) {
+                syncToApi(apiCall('DELETE', `/files/${fileId}`));
+            }
+        }
+
+        // View Switching
+        let currentView = 'table';
+
+        function switchView(view) {
+            currentView = view;
+
+            // Update tab active state
+            document.querySelectorAll('.tab-item').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+
+            // Update view containers
+            document.getElementById('tableView').classList.remove('active');
+            document.getElementById('chartView').classList.remove('active');
+
+            if (view === 'table') {
+                document.getElementById('tableView').classList.add('active');
+            } else if (view === 'chart') {
+                document.getElementById('chartView').classList.add('active');
+                renderCharts();
+            }
+        }
+
+        function renderCharts() {
+            const container = document.getElementById('chartsContainer');
+            container.innerHTML = '';
+
+            if (positions.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <p>No positions yet. Create positions to see charts!</p>
+                    </div>
+                `;
+                return;
+            }
+
+            positions.forEach(position => {
+                container.appendChild(createPositionChart(position));
+            });
+        }
+
+        function createPositionChart(position) {
+            const chart = document.createElement('div');
+            chart.className = 'chart-container';
+
+            // Calculate statistics
+            const totalCandidates = position.candidates.length;
+            const statusCounts = {};
+
+            position.candidates.forEach(candidate => {
+                const status = candidate.data['Status'] || 'Unknown';
+                statusCounts[status] = (statusCounts[status] || 0) + 1;
+            });
+
+            const statusKeys = Object.keys(statusCounts);
+            const maxCount = Math.max(...Object.values(statusCounts), 1);
+
+            // Color maps
+            const badgeColorMap = {
+                'badge-green': '#52c41a',
+                'badge-blue': '#1890ff',
+                'badge-purple': '#722ed1',
+                'badge-red': '#ff4d4f',
+                'badge-orange': '#fa8c16',
+                'badge-cyan': '#13c2c2',
+                'badge-magenta': '#eb2f96',
+                'badge-yellow': '#d4b106',
+                'badge-lime': '#7cb305',
+                'badge-geekblue': '#2f54eb'
+            };
+
+            const statusColors = {
+                'Shortlisted': '#52c41a',
+                'Interview': '#1890ff',
+                'Offered': '#722ed1',
+                'Rejected': '#ff4d4f',
+                'New': '#fa8c16',
+                'Unknown': '#bfbfbf'
+            };
+
+            // Y-axis labels: top, mid, 0
+            const yMid = Math.ceil(maxCount / 2);
+            const yAxisHTML = `
+                <span class="vchart-y-label">${maxCount}</span>
+                <span class="vchart-y-label">${yMid}</span>
+                <span class="vchart-y-label">0</span>
+            `;
+
+            // Horizontal grid lines at 100% and 50%
+            const gridHTML = `
+                <div class="vchart-grid-line" style="top: 0%;"></div>
+                <div class="vchart-grid-line" style="top: 50%;"></div>
+            `;
+
+            // Build bars, x-labels, legend
+            let barsHTML = '';
+            let xLabelsHTML = '';
+            let legendHTML = '';
+
+            statusKeys.forEach(status => {
+                const count = statusCounts[status];
+                const heightPct = (count / maxCount) * 100;
+
+                let color = statusColors[status];
+                if (!color && position.customStatuses) {
+                    const cs = position.customStatuses.find(c => c.name === status);
+                    if (cs) color = badgeColorMap[cs.colorClass] || '#1890ff';
+                }
+                color = color || '#1890ff';
+
+                barsHTML += `
+                    <div class="vchart-col">
+                        <div class="vchart-bar"
+                             style="height:${heightPct}%; background:${color}; box-shadow:0 4px 12px ${color}40;"
+                             title="${status}: ${count} candidate${count !== 1 ? 's' : ''}">
+                            <span class="vchart-count">${count}</span>
+                        </div>
+                    </div>
+                `;
+                xLabelsHTML += `<div class="vchart-x-label">${status}</div>`;
+                legendHTML += `
+                    <div class="chart-legend-item">
+                        <div class="chart-legend-dot" style="background:${color};"></div>
+                        <span>${status}: <strong>${count}</strong></span>
+                    </div>
+                `;
+            });
+
+            chart.innerHTML = `
+                <div class="chart-header">
+                    <div>
+                        <div class="chart-title" style="color:${position.color};">${position.name}</div>
+                        <div class="chart-subtitle">${statusKeys.length} status stage${statusKeys.length !== 1 ? 's' : ''}</div>
+                    </div>
+                    <div class="chart-total-badge">👥 ${totalCandidates} candidate${totalCandidates !== 1 ? 's' : ''}</div>
+                </div>
+                ${statusKeys.length > 0 ? `
+                    <div class="vchart-area">
+                        <div class="vchart-y-axis">${yAxisHTML}</div>
+                        <div class="vchart-plot">
+                            ${gridHTML}
+                            <div class="vchart-bars">${barsHTML}</div>
+                        </div>
+                    </div>
+                    <div class="vchart-x-row">${xLabelsHTML}</div>
+                    <div class="chart-legend">${legendHTML}</div>
+                ` : '<div class="empty-state" style="padding:40px 0;text-align:center;color:#999;">No candidate data available</div>'}
+            `;
+
+            return chart;
+        }
+
+        // LocalStorage Persistence
+        const STORAGE_KEY = 'recruitment_scoreboard_data';
+
+        function saveToLocalStorage() {
+            // Save to current workspace
+            saveWorkspaceData();
+
+            // Update last saved indicator
+            updateLastSavedIndicator();
+
+            // Show brief save confirmation
+            showSaveIndicator();
+        }
+
+        function updateLastSavedIndicator() {
+            const indicator = document.getElementById('lastSavedIndicator');
+            if (indicator) {
+                const now = new Date();
+                const timeString = now.toLocaleTimeString('en-US', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                });
+                indicator.textContent = `Last saved: ${timeString}`;
+            }
+        }
+
+        function showSaveIndicator() {
+            // Update the banner indicator with a pulse effect
+            const bannerIndicator = document.getElementById('lastSavedIndicator');
+            if (bannerIndicator) {
+                bannerIndicator.style.color = '#52c41a';
+                bannerIndicator.style.fontWeight = '600';
+
+                setTimeout(() => {
+                    bannerIndicator.style.color = '';
+                    bannerIndicator.style.fontWeight = '';
+                }, 800);
+            }
+
+            // Show floating save indicator
+            const floatingIndicator = document.getElementById('saveIndicator');
+            if (!floatingIndicator) return;
+
+            // Show the indicator
+            floatingIndicator.classList.add('show');
+
+            // Hide after 2 seconds
+            setTimeout(() => {
+                floatingIndicator.classList.remove('show');
+            }, 2000);
+        }
+
+        function loadFromLocalStorage() {
+            const savedData = localStorage.getItem(STORAGE_KEY);
+            if (savedData) {
+                try {
+                    const data = JSON.parse(savedData);
+                    positions = data.positions || positions;
+                    nextPositionId = data.nextPositionId || nextPositionId;
+                    console.log('Data loaded from localStorage:', data.timestamp);
+                    return true;
+                } catch (error) {
+                    console.error('Error loading data from localStorage:', error);
+                    return false;
+                }
+            }
+            return false;
+        }
+
+        function clearLocalStorage() {
+            if (confirm('Are you sure you want to clear ALL workspaces and data? This cannot be undone.')) {
+                localStorage.removeItem(STORAGE_KEY);
+                localStorage.removeItem(WORKSPACES_STORAGE_KEY);
+                location.reload();
+            }
+        }
+
+        // Export data to JSON file
+        function exportData() {
+            const currentWorkspace = getCurrentWorkspace();
+            const data = {
+                workspaces: workspaces,
+                nextWorkspaceId: nextWorkspaceId,
+                currentWorkspaceId: currentWorkspaceId,
+                exportDate: new Date().toISOString(),
+                version: '2.0'
+            };
+
+            const dataStr = JSON.stringify(data, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+
+            // Create filename with date
+            const date = new Date();
+            const workspaceName = currentWorkspace ? currentWorkspace.name.replace(/[^a-z0-9]/gi, '_') : 'all_workspaces';
+            const filename = `${workspaceName}_backup_${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}_${String(date.getHours()).padStart(2, '0')}-${String(date.getMinutes()).padStart(2, '0')}.json`;
+
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            showNotification('✅ Backup exported successfully!');
+        }
+
+        // Import data from JSON file
+        function importData(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+
+                    // Check if it's new format (v2.0 with workspaces) or old format (v1.0 single workspace)
+                    if (data.version === '2.0' && data.workspaces) {
+                        // New format with workspaces
+                        const totalPositions = data.workspaces.reduce((sum, w) => sum + (w.positions?.length || 0), 0);
+                        const totalCandidates = data.workspaces.reduce((sum, w) =>
+                            sum + w.positions?.reduce((pSum, p) => pSum + (p.candidates?.length || 0), 0) || 0, 0);
+
+                        const confirmMsg = `Import backup from ${new Date(data.exportDate).toLocaleString()}?\n\nThis will replace your current data with:\n- ${data.workspaces.length} workspace(s)\n- ${totalPositions} position(s)\n- ${totalCandidates} candidate(s)\n\nYour current data will be overwritten.`;
+
+                        if (!confirm(confirmMsg)) {
+                            event.target.value = '';
+                            return;
+                        }
+
+                        // Import workspaces
+                        workspaces = data.workspaces;
+                        nextWorkspaceId = data.nextWorkspaceId || workspaces.length + 1;
+                        currentWorkspaceId = data.currentWorkspaceId || (workspaces.length > 0 ? workspaces[0].id : null);
+
+                        saveWorkspaces();
+                        renderWorkspaceList();
+                        loadWorkspaceData();
+                        renderAll();
+
+                    } else if (data.positions && Array.isArray(data.positions)) {
+                        // Old format - import as new workspace
+                        const totalCandidates = data.positions.reduce((sum, p) => sum + (p.candidates?.length || 0), 0);
+
+                        const confirmMsg = `Import backup from ${new Date(data.exportDate).toLocaleString()}?\n\nThis will create a new workspace with:\n- ${data.positions.length} position(s)\n- ${totalCandidates} candidate(s)`;
+
+                        if (!confirm(confirmMsg)) {
+                            event.target.value = '';
+                            return;
+                        }
+
+                        // Create new workspace from old data
+                        const newWorkspace = {
+                            id: nextWorkspaceId++,
+                            name: 'Imported Board',
+                            description: `Imported from backup on ${new Date().toLocaleDateString()}`,
+                            icon: '📥',
+                            color: '#1890ff',
+                            positions: data.positions,
+                            nextPositionId: data.nextPositionId || data.positions.length + 1,
+                            createdAt: new Date().toISOString()
+                        };
+
+                        workspaces.push(newWorkspace);
+                        currentWorkspaceId = newWorkspace.id;
+
+                        saveWorkspaces();
+                        renderWorkspaceList();
+                        loadWorkspaceData();
+                        renderAll();
+
+                    } else {
+                        throw new Error('Invalid backup file format');
+                    }
+
+                    showNotification('✅ Backup imported successfully!');
+                    event.target.value = '';
+
+                } catch (error) {
+                    alert('❌ Error importing backup: ' + error.message + '\n\nPlease make sure you selected a valid backup file.');
+                    console.error('Import error:', error);
+                    event.target.value = '';
+                }
+            };
+
+            reader.readAsText(file);
+        }
+
+        // Override functions to save after modifications
+        const originalCreatePosition = createPosition;
+        createPosition = function() {
+            originalCreatePosition();
+            saveToLocalStorage();
+        };
+
+        const originalDeletePosition = deletePosition;
+        deletePosition = function(positionId) {
+            originalDeletePosition(positionId);
+            saveToLocalStorage();
+        };
+
+        const originalAddCandidate = addCandidate;
+        addCandidate = function() {
+            originalAddCandidate();
+            saveToLocalStorage();
+        };
+
+        const originalDeleteCandidate = deleteCandidate;
+        deleteCandidate = function(positionId, candidateId) {
+            originalDeleteCandidate(positionId, candidateId);
+            saveToLocalStorage();
+        };
+
+        const originalRemoveColumn = removeColumn;
+        removeColumn = function(positionId, columnId) {
+            originalRemoveColumn(positionId, columnId);
+            saveToLocalStorage();
+        };
+
+        // Save after inline edits
+        const originalMakeEditable = makeEditable;
+        makeEditable = function(positionId, candidateId, columnName, columnType, cell, currentValue) {
+            const position = positions.find(p => p.id === positionId);
+            const candidate = position?.candidates.find(c => c.id === candidateId);
+
+            if (position && candidate) {
+                // Call original function
+                originalMakeEditable(positionId, candidateId, columnName, columnType, cell, currentValue);
+
+                // Add save to localStorage after edit
+                const observer = new MutationObserver(() => {
+                    if (!cell.querySelector('input') && !cell.querySelector('select') && !cell.querySelector('textarea')) {
+                        saveToLocalStorage();
+                        observer.disconnect();
+                    }
+                });
+                observer.observe(cell, { childList: true, subtree: true });
+            }
+        };
+
+        // ========================================
+        // COLLABORATION & SHARING FEATURES
+        // ========================================
+
+        let cloudSyncEnabled = false;
+        let cloudBoardId = null;
+        let syncInterval = null;
+        let currentShareLink = null;
+        let accessLevel = 'edit';
+
+        // Generate unique board ID
+        function generateBoardId() {
+            return 'board-' + Math.random().toString(36).substr(2, 9) + '-' + Date.now();
+        }
+
+        // Generate shareable link
+        function generateShareLink() {
+            const enableSync = document.getElementById('enableCloudSync').checked;
+            const accessRadio = document.querySelector('input[name="accessLevel"]:checked');
+            accessLevel = accessRadio ? accessRadio.value : 'edit';
+
+            if (enableSync) {
+                // Cloud sync mode
+                if (!cloudBoardId) {
+                    cloudBoardId = generateBoardId();
+                }
+
+                enableCloudSync();
+
+                const baseUrl = window.location.origin + window.location.pathname;
+                const shareUrl = `${baseUrl}?board=${cloudBoardId}&access=${accessLevel}`;
+                currentShareLink = shareUrl;
+
+                document.getElementById('shareLink').value = shareUrl;
+                document.getElementById('shareLinksSection').style.display = 'block';
+                document.getElementById('cloudSyncInfo').style.display = 'block';
+                document.getElementById('cloudBoardId').textContent = cloudBoardId;
+                document.getElementById('generateShareLinkBtn').style.display = 'none';
+                document.getElementById('stopSharingBtn').style.display = 'inline-flex';
+                document.getElementById('activeCollaborators').style.display = 'block';
+
+                showNotification('✅ Cloud sync enabled! Share link generated.');
+            } else {
+                // Local export mode (no real-time sync)
+                const data = {
+                    positions: positions,
+                    nextPositionId: nextPositionId,
+                    accessLevel: accessLevel,
+                    exportDate: new Date().toISOString()
+                };
+
+                const dataStr = JSON.stringify(data);
+                const encodedData = btoa(encodeURIComponent(dataStr));
+                const baseUrl = window.location.origin + window.location.pathname;
+                const shareUrl = `${baseUrl}?data=${encodedData}&access=${accessLevel}`;
+                currentShareLink = shareUrl;
+
+                document.getElementById('shareLink').value = shareUrl;
+                document.getElementById('shareLinksSection').style.display = 'block';
+                document.getElementById('cloudSyncInfo').style.display = 'none';
+                document.getElementById('generateShareLinkBtn').style.display = 'none';
+                document.getElementById('stopSharingBtn').style.display = 'inline-flex';
+
+                showNotification('✅ Share link generated (local data, no real-time sync)');
+            }
+        }
+
+        // Copy share link to clipboard
+        function copyShareLink() {
+            const linkInput = document.getElementById('shareLink');
+            linkInput.select();
+            document.execCommand('copy');
+            showNotification('✅ Link copied to clipboard!');
+        }
+
+        // Stop sharing
+        function stopSharing() {
+            if (confirm('Stop sharing this board? This will disable cloud sync and invalidate the share link.')) {
+                disableCloudSync();
+                cloudBoardId = null;
+                currentShareLink = null;
+
+                document.getElementById('shareLinksSection').style.display = 'none';
+                document.getElementById('cloudSyncInfo').style.display = 'none';
+                document.getElementById('generateShareLinkBtn').style.display = 'inline-flex';
+                document.getElementById('stopSharingBtn').style.display = 'none';
+                document.getElementById('activeCollaborators').style.display = 'none';
+
+                showNotification('🔒 Sharing stopped. Board is now private.');
+            }
+        }
+
+        // Enable cloud sync
+        function enableCloudSync() {
+            if (cloudSyncEnabled) return;
+
+            cloudSyncEnabled = true;
+
+            // Save to cloud immediately
+            syncToCloud();
+
+            // Set up auto-sync every 5 seconds
+            syncInterval = setInterval(() => {
+                syncFromCloud();
+            }, 5000);
+
+            updateSyncStatus('Connected', '#52c41a');
+            showNotification('☁️ Cloud sync enabled');
+        }
+
+        // Disable cloud sync
+        function disableCloudSync() {
+            if (!cloudSyncEnabled) return;
+
+            cloudSyncEnabled = false;
+
+            if (syncInterval) {
+                clearInterval(syncInterval);
+                syncInterval = null;
+            }
+
+            updateSyncStatus('Disconnected', '#999');
+        }
+
+        // Sync data to cloud (save)
+        function syncToCloud() {
+            if (!cloudBoardId) return;
+
+            const data = {
+                positions: positions,
+                nextPositionId: nextPositionId,
+                lastModified: new Date().toISOString(),
+                accessLevel: accessLevel
+            };
+
+            // Store in localStorage with board ID for simulation
+            // In production, this would be an API call to your backend
+            const cloudKey = `cloud_board_${cloudBoardId}`;
+            localStorage.setItem(cloudKey, JSON.stringify(data));
+
+            updateSyncStatus('Synced', '#52c41a');
+            console.log('Synced to cloud:', cloudBoardId);
+        }
+
+        // Sync data from cloud (load)
+        function syncFromCloud() {
+            if (!cloudBoardId) return;
+
+            const cloudKey = `cloud_board_${cloudBoardId}`;
+            const cloudData = localStorage.getItem(cloudKey);
+
+            if (cloudData) {
+                try {
+                    const data = JSON.parse(cloudData);
+
+                    // Check if cloud data is newer
+                    const localTimestamp = localStorage.getItem(STORAGE_KEY + '_timestamp');
+                    if (data.lastModified > localTimestamp) {
+                        positions = data.positions;
+                        nextPositionId = data.nextPositionId;
+                        renderAll();
+                        updateSyncStatus('Updated from cloud', '#52c41a');
+                        console.log('Updated from cloud:', cloudBoardId);
+                    }
+                } catch (error) {
+                    console.error('Error syncing from cloud:', error);
+                    updateSyncStatus('Sync error', '#ff4d4f');
+                }
+            }
+        }
+
+        // Update sync status indicator
+        function updateSyncStatus(status, color) {
+            const syncStatus = document.getElementById('syncStatus');
+            const syncStatusText = document.getElementById('cloudSyncStatusText');
+
+            if (syncStatus) {
+                syncStatus.textContent = '☁️ ' + status;
+                syncStatus.style.color = color;
+            }
+
+            if (syncStatusText) {
+                syncStatusText.textContent = status;
+                syncStatusText.style.color = color;
+            }
+        }
+
+        // Override saveToLocalStorage to also sync to cloud
+        const originalSaveToLocalStorage = saveToLocalStorage;
+        saveToLocalStorage = function() {
+            originalSaveToLocalStorage();
+
+            // Also save timestamp
+            localStorage.setItem(STORAGE_KEY + '_timestamp', new Date().toISOString());
+
+            // Sync to cloud if enabled
+            if (cloudSyncEnabled && cloudBoardId) {
+                syncToCloud();
+            }
+        };
+
+        // Check if opened with shared link
+        function checkSharedLink() {
+            const urlParams = new URLSearchParams(window.location.search);
+
+            // Check for cloud sync board ID
+            if (urlParams.has('board')) {
+                cloudBoardId = urlParams.get('board');
+                const linkAccessLevel = urlParams.get('access') || 'edit';
+
+                showNotification('📂 Loading shared board...');
+
+                // Load from cloud
+                const cloudKey = `cloud_board_${cloudBoardId}`;
+                const cloudData = localStorage.getItem(cloudKey);
+
+                if (cloudData) {
+                    try {
+                        const data = JSON.parse(cloudData);
+                        positions = data.positions;
+                        nextPositionId = data.nextPositionId;
+                        accessLevel = linkAccessLevel;
+
+                        // Enable cloud sync for this board
+                        document.getElementById('enableCloudSync').checked = true;
+                        enableCloudSync();
+
+                        showNotification('✅ Shared board loaded! Real-time sync active.');
+
+                        // Set read-only mode if view-only access
+                        if (linkAccessLevel === 'view') {
+                            enableViewOnlyMode();
+                        }
+
+                        return true;
+                    } catch (error) {
+                        console.error('Error loading shared board:', error);
+                        showNotification('❌ Error loading shared board');
+                    }
+                } else {
+                    showNotification('⚠️ Board not found. Creator needs to share data first.');
+                }
+            }
+
+            // Check for inline data (no real-time sync)
+            if (urlParams.has('data')) {
+                try {
+                    const encodedData = urlParams.get('data');
+                    const dataStr = decodeURIComponent(atob(encodedData));
+                    const data = JSON.parse(dataStr);
+
+                    positions = data.positions;
+                    nextPositionId = data.nextPositionId;
+                    accessLevel = urlParams.get('access') || 'edit';
+
+                    showNotification('✅ Shared board loaded!');
+
+                    // Set read-only mode if view-only access
+                    if (accessLevel === 'view') {
+                        enableViewOnlyMode();
+                    }
+
+                    return true;
+                } catch (error) {
+                    console.error('Error loading shared data:', error);
+                    showNotification('❌ Invalid share link');
+                }
+            }
+
+            return false;
+        }
+
+        // Enable view-only mode
+        function enableViewOnlyMode() {
+            // Disable all edit buttons
+            const style = document.createElement('style');
+            style.innerHTML = `
+                .btn-primary, .add-position-btn, .action-btn,
+                button[onclick*="showModal('newPositionModal')"],
+                button[onclick*="showModal('candidateModal')"],
+                button[onclick*="delete"],
+                button[onclick*="removeColumn"],
+                .btn-danger {
+                    display: none !important;
+                }
+
+                td[onclick] {
+                    pointer-events: none !important;
+                    cursor: default !important;
+                }
+
+                .demo-banner {
+                    background: #ff9800 !important;
+                }
+            `;
+            document.head.appendChild(style);
+
+            // Update banner text
+            const banner = document.querySelector('.demo-banner');
+            if (banner) {
+                banner.innerHTML = '👁️ VIEW-ONLY MODE - You cannot edit this board<span id="lastSavedIndicator" style="margin-left: 12px;"></span><span id="syncStatus" style="margin-left: 12px;"></span>';
+            }
+
+            showNotification('👁️ Viewing in read-only mode');
+        }
+
+        // ========================================
+        // INITIALIZATION
+        // ========================================
+
+        (async function init() {
+            const sharedLinkLoaded = checkSharedLink();
+            if (sharedLinkLoaded) { renderAll(); return; }
+
+            if (isAuthenticated()) {
+                try {
+                    const me = await apiCall('GET', '/auth/me');
+                    if (me) {
+                        currentUser = me;
+                        updateUserDisplay();
+                        await loadFromAPI();
+                        return;
+                    }
+                } catch { clearTokens(); }
+            }
+
+            // Not authenticated — fall back to local data then show login
+            initializeWorkspaces();
+            renderWorkspaceList();
+            loadWorkspaceData();
+            renderAll();
+            showAuthModal();
+        })();
+    </script>
+</body>
+</html>

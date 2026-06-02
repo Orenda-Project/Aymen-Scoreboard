@@ -1,0 +1,31 @@
+{
+  "name": "recruitment-scoreboard-frontend",
+  "version": "1.0.0",
+  "type": "module",
+  "description": "Recruitment Scoreboard - Frontend Application",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "eslint . --ext js,jsx --report-unused-disable-directives --max-warnings 0"
+  },
+  "dependencies": {
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-router-dom": "^6.21.3",
+    "antd": "^5.13.3",
+    "axios": "^1.6.5",
+    "@tanstack/react-query": "^5.17.19",
+    "zustand": "^4.5.0",
+    "dayjs": "^1.11.10"
+  },
+  "devDependencies": {
+    "@types/react": "^18.2.48",
+    "@types/react-dom": "^18.2.18",
+    "@vitejs/plugin-react": "^4.2.1",
+    "autoprefixer": "^10.4.17",
+    "postcss": "^8.4.33",
+    "tailwindcss": "^3.4.1",
+    "vite": "^5.0.11"
+  }
+}

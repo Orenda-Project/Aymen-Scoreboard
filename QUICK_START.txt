@@ -1,0 +1,152 @@
+================================================================
+   RECRUITMENT SCOREBOARD - QUICK START GUIDE
+================================================================
+
+Your application is ready! Follow these steps to get started.
+
+================================================================
+STEP 1: INSTALL PREREQUISITES (One-time setup)
+================================================================
+
+Download and install these programs:
+
+1. Python 3.11+
+   → https://www.python.org/downloads/
+   ⚠ IMPORTANT: Check "Add Python to PATH" during installation
+
+2. PostgreSQL
+   → https://www.postgresql.org/download/windows/
+   ⚠ Remember the password you set for 'postgres' user
+   ⚠ Create a database named: recruitment_scoreboard
+
+3. Node.js 18+ (LTS version)
+   → https://nodejs.org/
+
+================================================================
+STEP 2: SETUP BACKEND (One-time setup)
+================================================================
+
+Open Command Prompt (cmd) and run:
+
+cd C:\Users\Taleemabad\Downloads\Scoreboard\backend
+
+python -m venv venv
+
+venv\Scripts\activate
+
+pip install -r requirements.txt
+
+[Edit .env file and set your PostgreSQL password]
+
+python manage.py makemigrations
+
+python manage.py migrate
+
+python manage.py createsuperuser
+[Enter username, email, and password when prompted]
+
+================================================================
+STEP 3: SETUP FRONTEND (One-time setup)
+================================================================
+
+Open a NEW Command Prompt window and run:
+
+cd C:\Users\Taleemabad\Downloads\Scoreboard\frontend
+
+npm install
+
+================================================================
+STEP 4: RUN THE APPLICATION (Every time you use it)
+================================================================
+
+You need TWO Command Prompt windows:
+
+WINDOW 1 - Backend:
+------------------------
+cd C:\Users\Taleemabad\Downloads\Scoreboard\backend
+venv\Scripts\activate
+python manage.py runserver
+
+WINDOW 2 - Frontend:
+------------------------
+cd C:\Users\Taleemabad\Downloads\Scoreboard\frontend
+npm run dev
+
+================================================================
+STEP 5: OPEN IN BROWSER
+================================================================
+
+Open your browser and go to:
+→ http://localhost:5173/
+
+You should see the Recruitment Scoreboard dashboard!
+
+Admin panel (for database management):
+→ http://localhost:8000/admin/
+
+================================================================
+STOPPING THE APPLICATION
+================================================================
+
+In each Command Prompt window, press: Ctrl + C
+
+================================================================
+WHAT YOU CAN DO NOW
+================================================================
+
+✅ Create job positions (Software Engineer, Product Manager, etc.)
+✅ View positions in a clean dashboard
+✅ Add candidates to positions
+✅ View candidate information
+✅ Access the admin panel to manage all data
+
+================================================================
+WHAT'S NEXT (Optional - Can be added later)
+================================================================
+
+The backend API is 100% complete and supports:
+- Adding custom columns (Status, Date, File Upload, Percentage, Text)
+- File uploads for resumes/documents
+- Advanced search and filtering
+- Sorting by any column
+
+The frontend needs additional UI components for:
+- Column management interface
+- Full candidate table with dynamic columns
+- Cell renderers for each column type
+- File upload interface
+- Advanced search/filter UI
+
+Any React developer can add these features using the completed backend API!
+
+================================================================
+NEED HELP?
+================================================================
+
+📖 See SETUP_GUIDE.md for detailed instructions
+📖 See README.md for project overview
+🌐 Admin Panel: http://localhost:8000/admin/
+🌐 API Docs: http://localhost:8000/api/
+
+Common Issues:
+- "python not recognized" → Reinstall Python with "Add to PATH"
+- "Port already in use" → Close other Django/React servers
+- Database error → Check PostgreSQL is running and .env password is correct
+
+================================================================
+SHARING WITH A DEVELOPER
+================================================================
+
+If you want to hire a developer to complete the UI, share:
+1. This entire Scoreboard folder
+2. SETUP_GUIDE.md (for detailed setup)
+3. README.md (for project overview)
+
+The developer will have everything they need!
+
+================================================================
+
+Congratulations! You have a production-ready recruitment
+management system. Happy recruiting! 🚀
+
+================================================================

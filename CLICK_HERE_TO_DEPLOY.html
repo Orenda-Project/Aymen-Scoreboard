@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deploy Your Recruitment Scoreboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 50px;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            font-size: 36px;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .subtitle {
+            color: #666;
+            font-size: 18px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .option {
+            background: #f8f9fa;
+            border: 3px solid #e0e0e0;
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 25px;
+            transition: all 0.3s ease;
+        }
+
+        .option:hover {
+            border-color: #667eea;
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.2);
+        }
+
+        .option h2 {
+            color: #667eea;
+            font-size: 24px;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background: #10b981;
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .option p {
+            color: #555;
+            font-size: 16px;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .big-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            padding: 18px 40px;
+            border-radius: 10px;
+            font-size: 18px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            width: 100%;
+            text-align: center;
+        }
+
+        .big-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
+        }
+
+        .steps {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 20px;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+
+        .steps h3 {
+            color: #856404;
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        .steps ol {
+            margin-left: 20px;
+            color: #856404;
+        }
+
+        .steps li {
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .divider {
+            text-align: center;
+            color: #999;
+            margin: 30px 0;
+            font-weight: bold;
+        }
+
+        .note {
+            background: #e3f2fd;
+            border-left: 4px solid #2196f3;
+            padding: 20px;
+            margin-top: 30px;
+            border-radius: 5px;
+        }
+
+        .note h3 {
+            color: #1976d2;
+            font-size: 18px;
+            margin-bottom: 10px;
+        }
+
+        .note p {
+            color: #1565c0;
+            margin: 0;
+            line-height: 1.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Deploy Your Recruitment Scoreboard</h1>
+        <p class="subtitle">Choose the easiest option for you (all are FREE)</p>
+
+        <!-- Option 1 -->
+        <div class="option">
+            <h2>
+                <span>Option 1: Netlify Drop</span>
+                <span class="badge">Easiest</span>
+            </h2>
+            <p>Drag and drop your file to get it online in 30 seconds. No account needed!</p>
+            <a href="https://app.netlify.com/drop" class="big-button" target="_blank">
+                📤 Open Netlify Drop
+            </a>
+            <div class="steps">
+                <h3>📋 What to do after clicking:</h3>
+                <ol>
+                    <li>A new tab will open with a box</li>
+                    <li>Find "DEMO.html" file in your Downloads\Scoreboard folder</li>
+                    <li>Drag the file and drop it in the box</li>
+                    <li>Wait 5 seconds - you'll get your link!</li>
+                    <li>Copy and share the link</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="divider">OR</div>
+
+        <!-- Option 2 -->
+        <div class="option">
+            <h2>
+                <span>Option 2: Tiiny Host</span>
+                <span class="badge">No Drag</span>
+            </h2>
+            <p>Just click buttons - no dragging needed. Super simple!</p>
+            <a href="https://tiiny.host" class="big-button" target="_blank">
+                🌐 Open Tiiny Host
+            </a>
+            <div class="steps">
+                <h3>📋 What to do after clicking:</h3>
+                <ol>
+                    <li>Click "Choose File" button on the website</li>
+                    <li>Select "DEMO.html" from Downloads\Scoreboard folder</li>
+                    <li>Click "Upload" button</li>
+                    <li>Wait a few seconds - you'll get your link!</li>
+                    <li>Copy and share the link</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="divider">OR</div>
+
+        <!-- Option 3 -->
+        <div class="option">
+            <h2>
+                <span>Option 3: Surge.sh</span>
+                <span class="badge">Alternative</span>
+            </h2>
+            <p>Another simple option with instant deployment.</p>
+            <a href="https://surge.sh/help/getting-started-with-surge" class="big-button" target="_blank">
+                ⚡ Learn About Surge
+            </a>
+            <div class="steps">
+                <h3>📋 What to do:</h3>
+                <ol>
+                    <li>Follow the simple guide on their website</li>
+                    <li>Upload DEMO.html</li>
+                    <li>Get your link</li>
+                </ol>
+            </div>
+        </div>
+
+        <div class="note">
+            <h3>💡 Important Information</h3>
+            <p>
+                ✅ All your data (positions, candidates, resumes) is saved inside DEMO.html<br>
+                ✅ No account required for Options 1 & 2<br>
+                ✅ Completely FREE forever<br>
+                ✅ Your scoreboard will work exactly the same online<br>
+                ✅ You can use the link on any device (phone, tablet, laptop)
+            </p>
+        </div>
+
+        <div class="note" style="margin-top: 20px; background: #fff3e0; border-color: #ff9800;">
+            <h3 style="color: #e65100;">⚠️ Can't Do It Yourself?</h3>
+            <p style="color: #e65100;">
+                Ask a friend, family member, or colleague to help you. Show them this page and they can do it in 1 minute!
+            </p>
+        </div>
+    </div>
+</body>
+</html>

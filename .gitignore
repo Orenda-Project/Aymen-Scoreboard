@@ -1,0 +1,13 @@
+.env
+*.db
+*.db-shm
+*.db-wal
+.claude/
+backend/venv/
+backend/node_modules/
+backend/dist/
+frontend/node_modules/
+frontend/dist/
+__pycache__/
+*.pyc
+backend/.buildcache

@@ -1,0 +1,95 @@
+{
+  "workspaces": [
+    {
+      "id": 1,
+      "name": "Recruitment Scoreboard",
+      "description": "Main recruitment tracking board",
+      "icon": "👥",
+      "color": "#1890ff",
+      "positions": [
+        {
+          "id": 1,
+          "name": "Software Engineer",
+          "description": "Full-stack software engineering position",
+          "color": "#1890ff",
+          "collapsed": false,
+          "columns": [
+            { "id": 1, "name": "Name", "type": "text", "fixed": true, "visible": true },
+            { "id": 2, "name": "Email", "type": "email", "fixed": true, "visible": false },
+            { "id": 3, "name": "Phone", "type": "phone", "fixed": true, "visible": false },
+            { "id": 4, "name": "Status", "type": "status", "visible": true },
+            { "id": 5, "name": "Interview Date", "type": "date", "visible": true },
+            { "id": 6, "name": "Resume", "type": "file", "visible": true },
+            { "id": 7, "name": "Technical Score", "type": "percentage", "visible": true },
+            { "id": 8, "name": "Feedback", "type": "text", "visible": true }
+          ],
+          "candidates": [
+            {
+              "id": 1,
+              "data": {
+                "Name": "John Doe",
+                "Email": "john.doe@email.com",
+                "Phone": "+1 (555) 123-4567",
+                "Status": "Shortlisted",
+                "Interview Date": "2024-02-20",
+                "Technical Score": 85,
+                "Feedback": "Strong technical skills, good culture fit"
+              }
+            },
+            {
+              "id": 2,
+              "data": {
+                "Name": "Sarah Smith",
+                "Email": "sarah.smith@email.com",
+                "Phone": "+1 (555) 234-5678",
+                "Status": "Interview",
+                "Interview Date": "2024-02-22",
+                "Technical Score": 78,
+                "Feedback": "Good communication skills, needs more technical depth"
+              }
+            }
+          ],
+          "nextCandidateId": 3,
+          "nextColumnId": 9
+        },
+        {
+          "id": 2,
+          "name": "QA Lead",
+          "description": "Quality Assurance team lead position",
+          "color": "#52c41a",
+          "collapsed": false,
+          "columns": [
+            { "id": 1, "name": "Name", "type": "text", "fixed": true, "visible": true },
+            { "id": 2, "name": "Email", "type": "email", "fixed": true, "visible": false },
+            { "id": 3, "name": "Phone", "type": "phone", "fixed": true, "visible": false },
+            { "id": 4, "name": "Status", "type": "status", "visible": true },
+            { "id": 5, "name": "Interview Date", "type": "date", "visible": true },
+            { "id": 6, "name": "Experience (Years)", "type": "number", "visible": true },
+            { "id": 7, "name": "Test Score", "type": "percentage", "visible": true }
+          ],
+          "candidates": [
+            {
+              "id": 1,
+              "data": {
+                "Name": "Michael Chen",
+                "Email": "m.chen@email.com",
+                "Phone": "+1 (555) 345-6789",
+                "Status": "Offered",
+                "Interview Date": "2024-02-18",
+                "Experience (Years)": 8,
+                "Test Score": 92
+              }
+            }
+          ],
+          "nextCandidateId": 2,
+          "nextColumnId": 8
+        }
+      ],
+      "nextPositionId": 3,
+      "createdAt": "2024-02-13T10:00:00.000Z"
+    }
+  ],
+  "nextWorkspaceId": 2,
+  "currentWorkspaceId": 1,
+  "timestamp": "2024-02-13T10:00:00.000Z"
+}

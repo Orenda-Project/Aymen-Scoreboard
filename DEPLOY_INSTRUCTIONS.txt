@@ -1,0 +1,74 @@
+╔═══════════════════════════════════════════════════════════════╗
+║     HOW TO PUT YOUR RECRUITMENT SCOREBOARD ONLINE             ║
+║                  (3 SIMPLE STEPS)                             ║
+╚═══════════════════════════════════════════════════════════════╝
+
+✅ OPTION 1: NETLIFY DROP (EASIEST - 30 SECONDS)
+═══════════════════════════════════════════════════════════════
+
+STEP 1: Open this link in your browser
+👉 https://app.netlify.com/drop
+
+STEP 2: Drag the file "DEMO.html" from your Downloads\Scoreboard folder
+        and drop it into the box on the Netlify website
+
+STEP 3: Wait 5 seconds. You will get a link like:
+        https://your-site-name-123456.netlify.app
+
+DONE! Share that link with anyone.
+
+═══════════════════════════════════════════════════════════════
+
+✅ OPTION 2: TIINY.HOST (NO DRAG, JUST CLICK)
+═══════════════════════════════════════════════════════════════
+
+STEP 1: Go to https://tiiny.host
+
+STEP 2: Click "Choose File" button
+
+STEP 3: Select DEMO.html from your computer
+
+STEP 4: Click "Upload"
+
+STEP 5: Get your link like: https://your-site.tiiny.site
+
+DONE!
+
+═══════════════════════════════════════════════════════════════
+
+✅ OPTION 3: ASK SOMEONE TO HELP (5 MINUTES)
+═══════════════════════════════════════════════════════════════
+
+Show them this file and ask them to:
+1. Go to Netlify Drop website
+2. Drag DEMO.html file
+3. Give you the link
+
+═══════════════════════════════════════════════════════════════
+
+📌 IMPORTANT NOTES:
+- Your data is saved inside DEMO.html (nothing lost)
+- No account needed for Option 1 or 2
+- Both are FREE forever
+- Your scoreboard will work exactly the same online
+
+═══════════════════════════════════════════════════════════════
+
+❓ WHICH OPTION TO CHOOSE?
+
+→ Choose OPTION 1 if you can drag files
+→ Choose OPTION 2 if dragging is hard
+→ Choose OPTION 3 if you want someone else to do it
+
+═══════════════════════════════════════════════════════════════
+
+🎯 AFTER IT'S ONLINE:
+
+Your link will look like:
+https://something-random-123.netlify.app
+OR
+https://something.tiiny.site
+
+Anyone with this link can access your scoreboard!
+
+═══════════════════════════════════════════════════════════════

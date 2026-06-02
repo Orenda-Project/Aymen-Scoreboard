@@ -1,0 +1,259 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// USERS & AUTH
+// ─────────────────────────────────────────────────────────────────────────────
+
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  passwordHash String   @map("password_hash")
+  avatarUrl    String?  @map("avatar_url")
+  isVerified   Boolean  @default(false) @map("is_verified")
+  createdAt    DateTime @default(now()) @map("created_at")
+  updatedAt    DateTime @updatedAt @map("updated_at")
+
+  refreshTokens         RefreshToken[]
+  workspacesCreated     Workspace[]       @relation("WorkspaceCreatedBy")
+  workspaceMembers      WorkspaceMember[]
+  invitationsSent       Invitation[]      @relation("InvitedBy")
+  positionsCreated      Position[]        @relation("PositionCreatedBy")
+  candidatesCreated     Candidate[]       @relation("CandidateCreatedBy")
+  candidateValuesUpdated CandidateValue[] @relation("CandidateValueUpdatedBy")
+  filesUploaded         File[]            @relation("FileUploadedBy")
+  auditLogs             AuditLog[]
+
+  @@map("users")
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  tokenHash String   @unique @map("token_hash")
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("refresh_tokens")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// WORKSPACES & ROLES
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum WorkspaceRole {
+  owner
+  admin
+  collaborator
+  viewer
+}
+
+model Workspace {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  icon        String?  @default("📋")
+  color       String   @default("#1890ff")
+  createdById String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  createdBy   User              @relation("WorkspaceCreatedBy", fields: [createdById], references: [id])
+  members     WorkspaceMember[]
+  positions   Position[]
+  invitations Invitation[]
+  auditLogs   AuditLog[]
+
+  @@map("workspaces")
+}
+
+model WorkspaceMember {
+  id          String        @id @default(uuid())
+  workspaceId String        @map("workspace_id")
+  userId      String        @map("user_id")
+  role        WorkspaceRole
+  invitedById String?       @map("invited_by")
+  joinedAt    DateTime      @default(now()) @map("joined_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([workspaceId, userId])
+  @@map("workspace_members")
+}
+
+model Invitation {
+  id          String        @id @default(uuid())
+  workspaceId String        @map("workspace_id")
+  email       String
+  role        WorkspaceRole
+  token       String        @unique
+  invitedById String        @map("invited_by")
+  expiresAt   DateTime      @map("expires_at")
+  acceptedAt  DateTime?     @map("accepted_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  invitedBy User      @relation("InvitedBy", fields: [invitedById], references: [id])
+
+  @@map("invitations")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// POSITIONS
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Position {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  name        String
+  description String?
+  color       String   @default("#1890ff")
+  isActive    Boolean  @default(false) @map("is_active")
+  isCollapsed Boolean  @default(false) @map("is_collapsed")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdById String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  workspace      Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  createdBy      User           @relation("PositionCreatedBy", fields: [createdById], references: [id])
+  columns        Column[]
+  customStatuses CustomStatus[]
+  candidates     Candidate[]
+
+  @@map("positions")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// COLUMNS
+// ─────────────────────────────────────────────────────────────────────────────
+
+enum ColumnType {
+  text
+  status
+  date
+  file
+  percentage
+  number
+  email
+  phone
+}
+
+model Column {
+  id         String     @id @default(uuid())
+  positionId String     @map("position_id")
+  name       String
+  type       ColumnType
+  isFixed    Boolean    @default(false) @map("is_fixed")
+  isVisible  Boolean    @default(true) @map("is_visible")
+  sortOrder  Int        @default(0) @map("sort_order")
+  createdAt  DateTime   @default(now()) @map("created_at")
+
+  position        Position         @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  candidateValues CandidateValue[]
+  files           File[]
+
+  @@map("columns")
+}
+
+model CustomStatus {
+  id         String   @id @default(uuid())
+  positionId String   @map("position_id")
+  name       String
+  colorClass String   @map("color_class")
+  sortOrder  Int      @default(0) @map("sort_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  position Position @relation(fields: [positionId], references: [id], onDelete: Cascade)
+
+  @@map("custom_statuses")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// CANDIDATES
+// ─────────────────────────────────────────────────────────────────────────────
+
+model Candidate {
+  id          String   @id @default(uuid())
+  positionId  String   @map("position_id")
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdById String   @map("created_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  position  Position         @relation(fields: [positionId], references: [id], onDelete: Cascade)
+  createdBy User             @relation("CandidateCreatedBy", fields: [createdById], references: [id])
+  values    CandidateValue[]
+  files     File[]
+
+  @@map("candidates")
+}
+
+model CandidateValue {
+  id          String   @id @default(uuid())
+  candidateId String   @map("candidate_id")
+  columnId    String   @map("column_id")
+  value       String?
+  updatedById String?  @map("updated_by")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  candidate Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  column    Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  updatedBy User?     @relation("CandidateValueUpdatedBy", fields: [updatedById], references: [id])
+
+  @@unique([candidateId, columnId])
+  @@map("candidate_values")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FILES (stored in S3/R2, not in DB)
+// ─────────────────────────────────────────────────────────────────────────────
+
+model File {
+  id           String   @id @default(uuid())
+  candidateId  String   @map("candidate_id")
+  columnId     String   @map("column_id")
+  originalName String   @map("original_name")
+  storageKey   String   @map("storage_key")
+  mimeType     String   @map("mime_type")
+  sizeBytes    Int      @map("size_bytes")
+  uploadedById String   @map("uploaded_by")
+  uploadedAt   DateTime @default(now()) @map("uploaded_at")
+
+  candidate  Candidate @relation(fields: [candidateId], references: [id], onDelete: Cascade)
+  column     Column    @relation(fields: [columnId], references: [id], onDelete: Cascade)
+  uploadedBy User      @relation("FileUploadedBy", fields: [uploadedById], references: [id])
+
+  @@map("files")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// AUDIT LOG
+// ─────────────────────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id          String   @id @default(uuid())
+  workspaceId String   @map("workspace_id")
+  userId      String   @map("user_id")
+  action      String   // CREATE | UPDATE | DELETE
+  entityType  String   @map("entity_type") // candidate | position | column | file
+  entityId    String   @map("entity_id")
+  oldValue    Json?    @map("old_value")
+  newValue    Json?    @map("new_value")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  workspace Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  user      User      @relation(fields: [userId], references: [id])
+
+  @@map("audit_log")
+}
