@@ -1,19 +1,15 @@
-FROM node:20-alpine AS builder
+FROM node:20-alpine AS frontend-builder
 WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npx prisma generate
-RUN npm run build || true
+COPY frontend/package*.json ./
+RUN npm install
+COPY frontend/ ./
+RUN VITE_API_BASE_URL=/api npx vite build
 
-FROM node:20-alpine AS runner
+FROM python:3.11-slim
 WORKDIR /app
-ENV NODE_ENV=production
-COPY package*.json ./
-RUN npm ci --omit=dev
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
-COPY prisma ./prisma
+COPY server.py ./
+COPY --from=frontend-builder /app/dist ./frontend/dist
 
+ENV PORT=8080
 EXPOSE 8080
-CMD ["node", "dist/index.js"]
+CMD ["python", "server.py"]
