@@ -1,8 +1,13 @@
 [phases.setup]
-nixPkgs = ["python311", "nodejs_20"]
+nixPkgs = ["python311", "nodejs_20", "nodePackages.npm"]
+
+[phases.install]
+cmds = []
 
 [phases.build]
-cmds = ["cd frontend && npm install && VITE_API_BASE_URL=/api npx vite build"]
+cmds = [
+  "cd frontend && npm install && VITE_API_BASE_URL=/api npx --yes vite build"
+]
 
 [start]
 cmd = "python server.py"

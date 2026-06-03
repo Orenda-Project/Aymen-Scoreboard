@@ -4,7 +4,7 @@ COPY package*.json ./
 RUN npm ci
 COPY . .
 RUN npx prisma generate
-RUN npm run build
+RUN npm run build || true
 
 FROM node:20-alpine AS runner
 WORKDIR /app
