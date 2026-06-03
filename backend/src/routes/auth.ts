@@ -1,6 +1,8 @@
 import { Router, Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
+import crypto from 'crypto';
 import prisma from '../lib/prisma';
+import { sendPasswordResetEmail } from '../lib/email';
 import {
   signAccessToken,
   signRefreshToken,
@@ -141,6 +143,50 @@ router.get('/me', requireAuth, async (req: Request, res: Response) => {
   });
   if (!user) { res.status(404).json({ error: 'User not found' }); return; }
   res.json(user);
+});
+
+// POST /api/auth/forgot-password
+router.post('/forgot-password', validate(forgotPasswordSchema), async (req: Request, res: Response) => {
+  const { email } = req.body;
+
+  const user = await prisma.user.findUnique({ where: { email } });
+  if (!user) {
+    res.status(200).json({ message: 'If an account exists, a reset link has been sent' });
+    return;
+  }
+
+  const token = crypto.randomBytes(32).toString('hex');
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000);
+
+  await prisma.passwordResetToken.create({
+    data: { userId: user.id, token, expiresAt },
+  });
+
+  await sendPasswordResetEmail(user.email, token);
+
+  res.status(200).json({ message: 'If an account exists, a reset link has been sent' });
+});
+
+// POST /api/auth/reset-password
+router.post('/reset-password', validate(resetPasswordSchema), async (req: Request, res: Response) => {
+  const { token, password } = req.body;
+
+  const resetToken = await prisma.passwordResetToken.findUnique({ where: { token } });
+  if (!resetToken || resetToken.expiresAt < new Date()) {
+    res.status(400).json({ error: 'Invalid or expired reset token' });
+    return;
+  }
+
+  const passwordHash = await bcrypt.hash(password, 12);
+
+  await prisma.user.update({
+    where: { id: resetToken.userId },
+    data: { passwordHash },
+  });
+
+  await prisma.passwordResetToken.delete({ where: { id: resetToken.id } });
+
+  res.status(200).json({ message: 'Password reset successfully' });
 });
 
 export default router;

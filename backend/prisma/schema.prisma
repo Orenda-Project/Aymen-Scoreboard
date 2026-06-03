@@ -21,15 +21,16 @@ model User {
   createdAt    DateTime @default(now()) @map("created_at")
   updatedAt    DateTime @updatedAt @map("updated_at")
 
-  refreshTokens         RefreshToken[]
-  workspacesCreated     Workspace[]       @relation("WorkspaceCreatedBy")
-  workspaceMembers      WorkspaceMember[]
-  invitationsSent       Invitation[]      @relation("InvitedBy")
-  positionsCreated      Position[]        @relation("PositionCreatedBy")
-  candidatesCreated     Candidate[]       @relation("CandidateCreatedBy")
-  candidateValuesUpdated CandidateValue[] @relation("CandidateValueUpdatedBy")
-  filesUploaded         File[]            @relation("FileUploadedBy")
-  auditLogs             AuditLog[]
+  refreshTokens          RefreshToken[]
+  passwordResetTokens    PasswordResetToken[]
+  workspacesCreated      Workspace[]       @relation("WorkspaceCreatedBy")
+  workspaceMembers       WorkspaceMember[]
+  invitationsSent        Invitation[]      @relation("InvitedBy")
+  positionsCreated       Position[]        @relation("PositionCreatedBy")
+  candidatesCreated      Candidate[]       @relation("CandidateCreatedBy")
+  candidateValuesUpdated CandidateValue[]  @relation("CandidateValueUpdatedBy")
+  filesUploaded          File[]            @relation("FileUploadedBy")
+  auditLogs              AuditLog[]
 
   @@map("users")
 }
@@ -44,6 +45,18 @@ model RefreshToken {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("refresh_tokens")
+}
+
+model PasswordResetToken {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  token     String   @unique
+  expiresAt DateTime @map("expires_at")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("password_reset_tokens")
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
