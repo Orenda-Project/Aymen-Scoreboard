@@ -3,6 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
+import path from 'path';
 
 import authRouter from './routes/auth';
 import workspacesRouter from './routes/workspaces';
@@ -14,15 +15,27 @@ import analyticsRouter from './routes/analytics';
 const app = express();
 const PORT = process.env.PORT ?? 3001;
 
+// Required on Railway/reverse proxies (rate-limit + correct client IP)
+app.set('trust proxy', 1);
+
 // ─── Security headers ─────────────────────────────────────────────────────────
 app.use(helmet());
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.FRONTEND_URL,
+  'https://scoreboard-production-c69b.up.railway.app',
+  'http://localhost:5173',
+  'http://localhost:3001',
+].filter(Boolean) as string[];
+
 app.use(
   cors({
-    origin: process.env.NODE_ENV === 'production'
-      ? (process.env.FRONTEND_URL ?? 'http://localhost:5173')
-      : true, // allow any origin in development
+    origin: (origin, callback) => {
+      if (process.env.NODE_ENV !== 'production') return callback(null, true);
+      if (!origin || allowedOrigins.includes(origin)) return callback(null, true);
+      callback(new Error('Not allowed by CORS'));
+    },
     credentials: true,
     methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
@@ -55,6 +68,10 @@ app.use(express.urlencoded({ extended: true }));
 app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+// ─── Scoreboard UI (DEMO.html) ────────────────────────────────────────────────
+const demoPath = path.join(__dirname, '..', 'DEMO.html');
+app.get('/', (_req, res) => res.sendFile(demoPath));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRouter);

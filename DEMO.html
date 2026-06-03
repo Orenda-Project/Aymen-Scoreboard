@@ -1897,11 +1897,10 @@
         // API CLIENT LAYER
         // ========================================
 
-        // Points to the local Node.js backend (port 3001).
-        // Update this to your Railway/production URL when deploying.
+        const PRODUCTION_API = 'https://scoreboard-production-c69b.up.railway.app/api';
         const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-            ? 'http://localhost:3001/api'
-            : '/api';  // same-origin after full deployment
+            ? PRODUCTION_API
+            : (window.location.hostname.includes('railway.app') ? '/api' : PRODUCTION_API);
 
         let _accessToken  = localStorage.getItem('sb_access_token')  || null;
         let _refreshToken = localStorage.getItem('sb_refresh_token') || null;
