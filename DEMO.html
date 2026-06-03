@@ -1899,7 +1899,7 @@
 
         const PRODUCTION_API = 'https://scoreboard-production-c69b.up.railway.app/api';
         const API_BASE = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-            ? PRODUCTION_API
+            ? 'http://localhost:3001/api'
             : (window.location.hostname.includes('railway.app') ? '/api' : PRODUCTION_API);
 
         let _accessToken  = localStorage.getItem('sb_access_token')  || null;

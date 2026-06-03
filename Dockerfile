@@ -17,4 +17,4 @@ COPY backend/prisma ./prisma
 COPY DEMO.html ./DEMO.html
 
 EXPOSE 8080
-CMD ["sh", "-c", "npx prisma db push && node dist/index.js"]
+CMD ["node", "dist/index.js"]
