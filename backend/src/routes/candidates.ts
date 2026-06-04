@@ -24,10 +24,10 @@ async function resolveWorkspaceId(positionId: string): Promise<string | null> {
 }
 
 // Inject workspaceId into req so requireRole can find it
-router.use(async (req: AuthRequest, res: Response, next) => {
+router.use(async (req, res, next) => {
   const workspaceId = await resolveWorkspaceId(req.params.positionId);
   if (!workspaceId) { res.status(404).json({ error: 'Position not found' }); return; }
-  (req as Record<string, unknown>).resolvedWorkspaceId = workspaceId;
+  req.resolvedWorkspaceId = workspaceId;
   req.params.workspaceId = workspaceId;
   next();
 });
@@ -83,7 +83,7 @@ router.post('/', requireRole('collaborator'), validate(createCandidateSchema), a
     data: {
       positionId,
       sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
-      createdById: req.userId,
+      createdById: req.userId!,
       values: {
         createMany: {
           data: [
@@ -113,8 +113,8 @@ router.patch('/:candidateId/values', requireRole('collaborator'), validate(updat
   const upserts = Object.entries(values).map(([columnId, value]) =>
     prisma.candidateValue.upsert({
       where: { candidateId_columnId: { candidateId, columnId } },
-      update: { value, updatedById: req.userId },
-      create: { candidateId, columnId, value, updatedById: req.userId },
+      update: { value, updatedById: req.userId! },
+      create: { candidateId, columnId, value, updatedById: req.userId! },
     })
   );
 
@@ -126,7 +126,7 @@ router.patch('/:candidateId/values', requireRole('collaborator'), validate(updat
     prisma.auditLog.create({
       data: {
         workspaceId: auditWorkspaceId,
-        userId: req.userId!,
+        userId: req.userId!!,
         action: 'UPDATE',
         entityType: 'candidate',
         entityId: candidateId,

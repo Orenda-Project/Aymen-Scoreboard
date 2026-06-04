@@ -38,7 +38,7 @@ router.post('/upload', upload.single('file'), async (req: AuthRequest, res: Resp
   if (!workspaceId) { res.status(404).json({ error: 'Candidate not found' }); return; }
   req.params.workspaceId = workspaceId;
   const member = await prisma.workspaceMember.findUnique({
-    where: { workspaceId_userId: { workspaceId, userId: req.userId } },
+    where: { workspaceId_userId: { workspaceId, userId: req.userId! } },
   });
   if (!member || member.role === 'viewer') {
     res.status(403).json({ error: 'Insufficient permissions to upload files' });
@@ -62,7 +62,7 @@ router.post('/upload', upload.single('file'), async (req: AuthRequest, res: Resp
       storageKey,
       mimeType: req.file.mimetype,
       sizeBytes: req.file.size,
-      uploadedById: req.userId,
+      uploadedById: req.userId!,
     },
   });
 
@@ -79,7 +79,7 @@ router.get('/:fileId/url', async (req: AuthRequest, res: Response) => {
   if (!workspaceId) { res.status(404).json({ error: 'File not found' }); return; }
 
   const member = await prisma.workspaceMember.findUnique({
-    where: { workspaceId_userId: { workspaceId, userId: req.userId } },
+    where: { workspaceId_userId: { workspaceId, userId: req.userId! } },
   });
   if (!member) { res.status(403).json({ error: 'Access denied' }); return; }
 
@@ -96,7 +96,7 @@ router.delete('/:fileId', async (req: AuthRequest, res: Response) => {
   if (!workspaceId) { res.status(404).json({ error: 'File not found' }); return; }
 
   const member = await prisma.workspaceMember.findUnique({
-    where: { workspaceId_userId: { workspaceId, userId: req.userId } },
+    where: { workspaceId_userId: { workspaceId, userId: req.userId! } },
   });
   if (!member || member.role === 'viewer') {
     res.status(403).json({ error: 'Insufficient permissions' });

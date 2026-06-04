@@ -69,9 +69,12 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ─── Scoreboard UI (DEMO.html) ────────────────────────────────────────────────
-const demoPath = path.join(__dirname, '..', 'DEMO.html');
-app.get('/', (_req, res) => res.sendFile(demoPath));
+// ─── Serve frontend static files ──────────────────────────────────────────────
+const frontendDistPath = path.join(__dirname, '../../frontend/dist');
+app.use(express.static(frontendDistPath));
+app.get('/', (_req, res) => {
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
+});
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRouter);
@@ -89,9 +92,9 @@ app.use('/api/files', filesRouter);
 // Analytics
 app.use('/api/workspaces/:workspaceId/analytics', analyticsRouter);
 
-// ─── 404 ──────────────────────────────────────────────────────────────────────
+// ─── SPA fallback: serve index.html for non-API routes ──────────────────────────
 app.use((_req, res) => {
-  res.status(404).json({ error: 'Route not found' });
+  res.sendFile(path.join(frontendDistPath, 'index.html'));
 });
 
 // ─── Global error handler ─────────────────────────────────────────────────────

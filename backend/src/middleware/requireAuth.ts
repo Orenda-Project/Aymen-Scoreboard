@@ -1,10 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken } from '../lib/jwt';
 
-export interface AuthRequest extends Request {
-  userId: string;
-  memberRole?: string;
-}
+// Type alias for convenience — Express.Request is now augmented with userId/memberRole
+export type AuthRequest = Request;
 
 export function requireAuth(req: Request, res: Response, next: NextFunction): void {
   const authHeader = req.headers.authorization;
@@ -22,6 +20,6 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
     return;
   }
 
-  (req as AuthRequest).userId = payload.userId;
+  req.userId = payload.userId;
   next();
 }

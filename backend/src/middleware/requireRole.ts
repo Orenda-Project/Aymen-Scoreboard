@@ -1,5 +1,4 @@
-import { Response, NextFunction } from 'express';
-import { AuthRequest } from './requireAuth';
+import { Request, Response, NextFunction } from 'express';
 import prisma from '../lib/prisma';
 import { WorkspaceRole } from '@prisma/client';
 
@@ -17,11 +16,9 @@ const ROLE_RANK: Record<WorkspaceRole, number> = {
  * Example: router.delete('/:id', requireAuth, requireRole('admin'), handler)
  */
 export function requireRole(minRole: WorkspaceRole) {
-  return async (req: AuthRequest, res: Response, next: NextFunction): Promise<void> => {
+  return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     // workspaceId can come from route params directly or via nested resource
-    const workspaceId =
-      req.params.workspaceId ??
-      (req as Record<string, unknown>).resolvedWorkspaceId as string | undefined;
+    const workspaceId = req.params.workspaceId ?? req.resolvedWorkspaceId;
 
     if (!workspaceId) {
       res.status(400).json({ error: 'workspaceId is required' });
@@ -29,7 +26,7 @@ export function requireRole(minRole: WorkspaceRole) {
     }
 
     const member = await prisma.workspaceMember.findUnique({
-      where: { workspaceId_userId: { workspaceId, userId: req.userId } },
+      where: { workspaceId_userId: { workspaceId, userId: req.userId! } },
     });
 
     if (!member) {

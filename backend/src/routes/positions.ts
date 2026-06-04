@@ -47,7 +47,7 @@ router.post('/', requireRole('admin'), validate(createPositionSchema), async (re
       description,
       color,
       sortOrder: (maxOrder._max.sortOrder ?? -1) + 1,
-      createdById: req.userId,
+      createdById: req.userId!,
       // Default columns matching the frontend defaults
       columns: {
         createMany: {

@@ -21,7 +21,7 @@ router.use(requireAuth);
 // ─── GET /api/workspaces ──────────────────────────────────────────────────────
 router.get('/', async (req: AuthRequest, res: Response) => {
   const workspaces = await prisma.workspace.findMany({
-    where: { members: { some: { userId: req.userId } } },
+    where: { members: { some: { userId: req.userId! } } },
     include: {
       members: { select: { userId: true, role: true } },
       _count: { select: { positions: true } },
@@ -41,9 +41,9 @@ router.post('/', validate(createWorkspaceSchema), async (req: AuthRequest, res: 
       description,
       icon,
       color,
-      createdById: req.userId,
+      createdById: req.userId!,
       members: {
-        create: { userId: req.userId, role: 'owner' },
+        create: { userId: req.userId!, role: 'owner' },
       },
     },
     include: { members: true },
@@ -118,7 +118,7 @@ router.post('/:workspaceId/invite', requireRole('admin'), validate(inviteMemberS
       email,
       role,
       token,
-      invitedById: req.userId,
+      invitedById: req.userId!,
       expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
     },
     include: {
@@ -149,7 +149,7 @@ router.post('/accept-invite', validate(acceptInviteSchema), async (req: AuthRequ
   }
 
   // User must be the invited email
-  const user = await prisma.user.findUnique({ where: { id: req.userId } });
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
   if (!user || user.email !== invite.email) {
     res.status(403).json({ error: 'This invitation was sent to a different email address' });
     return;
@@ -157,7 +157,7 @@ router.post('/accept-invite', validate(acceptInviteSchema), async (req: AuthRequ
 
   await prisma.$transaction([
     prisma.workspaceMember.create({
-      data: { workspaceId: invite.workspaceId, userId: req.userId, role: invite.role, invitedById: invite.invitedById },
+      data: { workspaceId: invite.workspaceId, userId: req.userId!, role: invite.role, invitedById: invite.invitedById },
     }),
     prisma.invitation.update({ where: { id: invite.id }, data: { acceptedAt: new Date() } }),
   ]);
