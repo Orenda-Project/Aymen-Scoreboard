@@ -2,29 +2,27 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install backend deps (including devDependencies needed for build)
+# Copy and install backend deps first (layer cache)
 COPY backend/package*.json ./backend/
-RUN cd backend && npm install
+RUN cd backend && npm install --include=dev
 
-# Install frontend deps
+# Copy and install frontend deps
 COPY frontend/package*.json ./frontend/
 RUN cd frontend && npm install
 
-# Copy all source
+# Copy source (node_modules excluded via .dockerignore)
 COPY backend ./backend
 COPY frontend ./frontend
 
-# Generate Prisma client (uses musl binary for Alpine)
+# Generate Prisma client for Alpine Linux (musl)
 RUN cd backend && npx prisma generate
 
 # Build backend TypeScript
 RUN cd backend && npm run build
 
-# Build frontend (API calls go to same origin /api)
+# Build frontend
 RUN cd frontend && VITE_API_BASE_URL=/api npm run build
 
 ENV NODE_ENV=production
-
-EXPOSE 3001
 
 CMD ["node", "backend/dist/index.js"]
