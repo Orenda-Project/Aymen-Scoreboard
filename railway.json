@@ -5,7 +5,7 @@
     "dockerfilePath": "Dockerfile"
   },
   "deploy": {
-    "startCommand": "cd backend && npx prisma migrate deploy && node dist/index.js",
+    "startCommand": "node backend/dist/index.js",
     "healthcheckPath": "/api/health",
     "healthcheckTimeout": 120
   }
