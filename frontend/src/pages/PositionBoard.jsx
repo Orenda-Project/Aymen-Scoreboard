@@ -163,7 +163,7 @@ const PositionBoard = () => {
                   Add First Candidate
                 </Button>
               </Space>
-            </Empty>
+            </Space>
           </Empty>
         ) : candidates.length === 0 ? (
           <Empty
