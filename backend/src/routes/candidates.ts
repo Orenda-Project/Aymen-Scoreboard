@@ -86,11 +86,12 @@ router.post('/', requireRole('collaborator'), validate(createCandidateSchema), a
       createdById: req.userId!,
       values: {
         createMany: {
+          // candidateId is filled in by Prisma via the nested relation — passing it is a validation error
           data: [
-            colMap['Name']  && { candidateId: '', columnId: colMap['Name'],  value: name },
-            colMap['Email'] && email && { candidateId: '', columnId: colMap['Email'], value: email },
-            colMap['Phone'] && phone && { candidateId: '', columnId: colMap['Phone'], value: phone },
-          ].filter(Boolean) as { candidateId: string; columnId: string; value: string }[],
+            colMap['Name']  && name  && { columnId: colMap['Name'],  value: name },
+            colMap['Email'] && email && { columnId: colMap['Email'], value: email },
+            colMap['Phone'] && phone && { columnId: colMap['Phone'], value: phone },
+          ].filter(Boolean) as { columnId: string; value: string }[],
           skipDuplicates: true,
         },
       },

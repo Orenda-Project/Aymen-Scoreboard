@@ -1,5 +1,8 @@
 import 'dotenv/config';
 import express from 'express';
+// Routes async errors thrown in handlers to the global error middleware
+// instead of crashing the process with an unhandled rejection.
+import 'express-async-errors';
 import cors from 'cors';
 import helmet from 'helmet';
 import rateLimit from 'express-rate-limit';
