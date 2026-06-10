@@ -1,12 +1,25 @@
-import { Router, Request, Response } from 'express';
+import { Router, Response } from 'express';
 import multer from 'multer';
 import { requireAuth, AuthRequest } from '../middleware/requireAuth';
-import { requireRole } from '../middleware/requireRole';
 import prisma from '../lib/prisma';
-import { uploadFile, getSignedDownloadUrl, deleteFile, validateFile } from '../lib/s3';
 
 const router = Router();
 const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 10 * 1024 * 1024 } });
+
+const ALLOWED_MIME_TYPES = [
+  'application/pdf',
+  'application/msword',
+  'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+  'image/jpeg',
+  'image/png',
+];
+
+function validateFile(mimeType: string, size: number): string | null {
+  if (!ALLOWED_MIME_TYPES.includes(mimeType))
+    return 'File type not allowed. Accepted: PDF, DOC, DOCX, JPG, PNG';
+  if (size > 10 * 1024 * 1024) return 'File too large. Maximum size is 10 MB';
+  return null;
+}
 
 router.use(requireAuth);
 
@@ -20,7 +33,7 @@ async function getWorkspaceId(candidateId: string): Promise<string | null> {
 }
 
 // ─── POST /api/files/upload ───────────────────────────────────────────────────
-// Body: multipart/form-data with fields: file, candidateId, columnId
+// Stores the file bytes in Postgres (no external storage service needed).
 router.post('/upload', upload.single('file'), async (req: AuthRequest, res: Response) => {
   if (!req.file) { res.status(400).json({ error: 'No file uploaded' }); return; }
 
@@ -36,7 +49,7 @@ router.post('/upload', upload.single('file'), async (req: AuthRequest, res: Resp
   // Permission check
   const workspaceId = await getWorkspaceId(candidateId);
   if (!workspaceId) { res.status(404).json({ error: 'Candidate not found' }); return; }
-  req.params.workspaceId = workspaceId;
+
   const member = await prisma.workspaceMember.findUnique({
     where: { workspaceId_userId: { workspaceId, userId: req.userId! } },
   });
@@ -45,36 +58,45 @@ router.post('/upload', upload.single('file'), async (req: AuthRequest, res: Resp
     return;
   }
 
-  // Delete existing file for this candidate+column if any
+  // Replace any existing file for this candidate+column
   const existing = await prisma.file.findFirst({ where: { candidateId, columnId } });
   if (existing) {
-    await deleteFile(existing.storageKey).catch(() => {});
     await prisma.file.delete({ where: { id: existing.id } });
   }
-
-  const storageKey = await uploadFile(req.file.buffer, req.file.mimetype, req.file.originalname);
 
   const file = await prisma.file.create({
     data: {
       candidateId,
       columnId,
       originalName: req.file.originalname,
-      storageKey,
+      storageKey: '',
       mimeType: req.file.mimetype,
       sizeBytes: req.file.size,
+      content: req.file.buffer,
       uploadedById: req.userId!,
     },
   });
 
-  res.status(201).json(file);
+  // Return metadata only — not the raw bytes
+  res.status(201).json({
+    id: file.id,
+    candidateId: file.candidateId,
+    columnId: file.columnId,
+    originalName: file.originalName,
+    mimeType: file.mimeType,
+    sizeBytes: file.sizeBytes,
+    uploadedAt: file.uploadedAt,
+  });
 });
 
-// ─── GET /api/files/:fileId/url ───────────────────────────────────────────────
-router.get('/:fileId/url', async (req: AuthRequest, res: Response) => {
+// ─── GET /api/files/:fileId/content ──────────────────────────────────────────
+// Streams the raw file bytes back to the client with the correct Content-Type.
+// The frontend fetches this with an Authorization header, converts to a Blob,
+// creates an object URL, and sets that as the <iframe> src for PDF preview.
+router.get('/:fileId/content', async (req: AuthRequest, res: Response) => {
   const file = await prisma.file.findUnique({ where: { id: req.params.fileId } });
-  if (!file) { res.status(404).json({ error: 'File not found' }); return; }
+  if (!file || !file.content) { res.status(404).json({ error: 'File not found' }); return; }
 
-  // Check membership
   const workspaceId = await getWorkspaceId(file.candidateId);
   if (!workspaceId) { res.status(404).json({ error: 'File not found' }); return; }
 
@@ -83,8 +105,31 @@ router.get('/:fileId/url', async (req: AuthRequest, res: Response) => {
   });
   if (!member) { res.status(403).json({ error: 'Access denied' }); return; }
 
-  const signedUrl = await getSignedDownloadUrl(file.storageKey);
-  res.json({ url: signedUrl, expiresIn: 900, file: { id: file.id, originalName: file.originalName, mimeType: file.mimeType, sizeBytes: file.sizeBytes } });
+  res.setHeader('Content-Type', file.mimeType);
+  res.setHeader('Content-Disposition', `inline; filename="${encodeURIComponent(file.originalName)}"`);
+  res.setHeader('Content-Length', String(file.sizeBytes));
+  res.send(file.content);
+});
+
+// ─── GET /api/files/:fileId/url ───────────────────────────────────────────────
+// Kept for compatibility — returns metadata so the frontend knows the file exists.
+// The actual bytes are served via /:fileId/content (requires auth header).
+router.get('/:fileId/url', async (req: AuthRequest, res: Response) => {
+  const file = await prisma.file.findUnique({ where: { id: req.params.fileId } });
+  if (!file) { res.status(404).json({ error: 'File not found' }); return; }
+
+  const workspaceId = await getWorkspaceId(file.candidateId);
+  if (!workspaceId) { res.status(404).json({ error: 'File not found' }); return; }
+
+  const member = await prisma.workspaceMember.findUnique({
+    where: { workspaceId_userId: { workspaceId, userId: req.userId! } },
+  });
+  if (!member) { res.status(403).json({ error: 'Access denied' }); return; }
+
+  res.json({
+    url: `/api/files/${file.id}/content`,
+    file: { id: file.id, originalName: file.originalName, mimeType: file.mimeType, sizeBytes: file.sizeBytes },
+  });
 });
 
 // ─── DELETE /api/files/:fileId ────────────────────────────────────────────────
@@ -103,9 +148,7 @@ router.delete('/:fileId', async (req: AuthRequest, res: Response) => {
     return;
   }
 
-  await deleteFile(file.storageKey).catch(() => {});
   await prisma.file.delete({ where: { id: file.id } });
-
   res.json({ message: 'File deleted' });
 });
 

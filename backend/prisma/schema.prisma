@@ -238,9 +238,10 @@ model File {
   candidateId  String   @map("candidate_id")
   columnId     String   @map("column_id")
   originalName String   @map("original_name")
-  storageKey   String   @map("storage_key")
+  storageKey   String   @default("") @map("storage_key")
   mimeType     String   @map("mime_type")
   sizeBytes    Int      @map("size_bytes")
+  content      Bytes?
   uploadedById String   @map("uploaded_by")
   uploadedAt   DateTime @default(now()) @map("uploaded_at")
 
