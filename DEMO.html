@@ -2006,6 +2006,123 @@
             });
         }
 
+        const VALID_COLUMN_TYPES = ['text', 'status', 'date', 'file', 'percentage', 'number', 'email', 'phone'];
+
+        // ========================================
+        // ONE-TIME MIGRATION: localStorage → server
+        // ========================================
+
+        const MIGRATED_FLAG = 'sb_local_data_migrated';
+
+        // Returns local workspaces that contain board data worth migrating, or null.
+        function readLocalBoardData() {
+            try {
+                const saved = JSON.parse(localStorage.getItem(WORKSPACES_STORAGE_KEY) || 'null');
+                const wss = saved?.workspaces;
+                if (Array.isArray(wss) && wss.some(w => (w.positions || []).length > 0)) {
+                    return wss;
+                }
+            } catch (e) { console.warn('[migration] could not parse workspaces store', e); }
+            try {
+                const old = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
+                if (Array.isArray(old?.positions) && old.positions.length > 0) {
+                    return [{
+                        name: 'Recruitment Scoreboard',
+                        description: 'Recovered from this browser',
+                        icon: '👥',
+                        color: '#1890ff',
+                        positions: old.positions,
+                    }];
+                }
+            } catch (e) { console.warn('[migration] could not parse legacy store', e); }
+            return null;
+        }
+
+        // Uploads every locally stored workspace/position/column/status/candidate to the API.
+        async function migrateLocalDataToServer(localWorkspaces, existingApiWorkspaces) {
+            const hexColor = (c) => (/^#[0-9a-fA-F]{6}$/.test(c) ? c : undefined);
+            let migratedPositions = 0, migratedCandidates = 0;
+
+            for (const lw of localWorkspaces) {
+                const localPositions = (lw.positions || []);
+                if (!localPositions.length) continue;
+
+                // Reuse an existing empty server workspace with the same name, else create one
+                let wsId = existingApiWorkspaces.find(
+                    w => w.name === lw.name && (w._count?.positions ?? 0) === 0
+                )?.id;
+                if (!wsId) {
+                    const created = await apiCall('POST', '/workspaces', {
+                        name: String(lw.name || 'Recruitment Scoreboard').slice(0, 100),
+                        description: String(lw.description || '').slice(0, 500) || undefined,
+                        icon: String(lw.icon || '📋').slice(0, 10),
+                        color: hexColor(lw.color),
+                    });
+                    wsId = created.id;
+                }
+
+                for (const lp of localPositions) {
+                    const createdPos = await apiCall('POST', `/workspaces/${wsId}/positions`, {
+                        name: String(lp.name || 'Untitled Position').slice(0, 150),
+                        description: String(lp.description || '').slice(0, 1000) || undefined,
+                        color: hexColor(lp.color),
+                    });
+                    migratedPositions++;
+
+                    // Map column name → server column id (defaults created by the API)
+                    const colIdByName = {};
+                    for (const c of (createdPos.columns || [])) colIdByName[c.name] = c.id;
+
+                    // Create custom columns; align visibility with local settings
+                    for (const lc of (lp.columns || [])) {
+                        if (!lc?.name) continue;
+                        if (!colIdByName[lc.name]) {
+                            const col = await apiCall('POST', `/workspaces/${wsId}/positions/${createdPos.id}/columns`, {
+                                name: String(lc.name).slice(0, 100),
+                                type: VALID_COLUMN_TYPES.includes(lc.type) ? lc.type : 'text',
+                            });
+                            colIdByName[lc.name] = col.id;
+                            if (lc.visible === false) {
+                                await apiCall('PUT', `/workspaces/${wsId}/positions/${createdPos.id}/columns/${col.id}`, { isVisible: false });
+                            }
+                        } else {
+                            const serverCol = (createdPos.columns || []).find(c => c.name === lc.name);
+                            if (serverCol && !!lc.visible !== !!serverCol.isVisible) {
+                                await apiCall('PUT', `/workspaces/${wsId}/positions/${createdPos.id}/columns/${serverCol.id}`, { isVisible: !!lc.visible });
+                            }
+                        }
+                    }
+
+                    // Custom statuses
+                    for (const s of (lp.customStatuses || [])) {
+                        if (!s?.name) continue;
+                        await apiCall('POST', `/workspaces/${wsId}/positions/${createdPos.id}/statuses`, {
+                            name: String(s.name).slice(0, 100),
+                            colorClass: String(s.colorClass || 'status-default'),
+                        });
+                    }
+
+                    // Candidates + their cell values
+                    for (const lc of (lp.candidates || [])) {
+                        const cname = String(lc.data?.['Name'] || 'Unnamed').slice(0, 200);
+                        const createdCand = await apiCall('POST', `/positions/${createdPos.id}/candidates`, { name: cname });
+                        migratedCandidates++;
+
+                        const values = {};
+                        for (const [colName, v] of Object.entries(lc.data || {})) {
+                            if (colName === 'Name' || v === undefined || v === null || v === '') continue;
+                            const colId = colIdByName[colName];
+                            if (colId) values[colId] = String(v);
+                        }
+                        if (Object.keys(values).length) {
+                            await apiCall('PATCH', `/positions/${createdPos.id}/candidates/${createdCand.id}/values`, { values });
+                        }
+                    }
+                }
+            }
+            console.log(`[migration] uploaded ${migratedPositions} positions, ${migratedCandidates} candidates`);
+        }
+
         // ========================================
         // AUTH FUNCTIONS
         // ========================================
@@ -2096,6 +2213,26 @@
             try {
                 const apiWorkspaces = await apiCall('GET', '/workspaces');
                 if (!apiWorkspaces) return;
+
+                // One-time upload of pre-server data living in this browser's localStorage
+                const serverEmpty = apiWorkspaces.every(w => (w._count?.positions ?? 0) === 0);
+                if (serverEmpty && !localStorage.getItem(MIGRATED_FLAG)) {
+                    const localWs = readLocalBoardData();
+                    if (localWs) {
+                        showNotification('⏫ Uploading your locally saved board data to the server…', 8000);
+                        try {
+                            await migrateLocalDataToServer(localWs, apiWorkspaces);
+                            localStorage.setItem(MIGRATED_FLAG, new Date().toISOString());
+                            showNotification('✅ Your data is now stored on the server!');
+                            return loadFromAPI();
+                        } catch (err) {
+                            console.error('[migration]', err);
+                            showNotification(`⚠️ Data upload failed: ${err.message} — your local data is untouched.`, 8000);
+                        }
+                    } else {
+                        localStorage.setItem(MIGRATED_FLAG, 'no-local-data');
+                    }
+                }
 
                 if (apiWorkspaces.length === 0) {
                     // New user — create a default workspace via API
@@ -3219,6 +3356,16 @@
             saveWorkspaceData();
             renderAll();
             showNotification(`✅ Column "${columnName}" added!`);
+
+            // Sync to API
+            if (isAuthenticated() && position._apiId && currentWorkspaceId) {
+                syncToApi(
+                    apiCall('POST', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/columns`, {
+                        name: columnName,
+                        type: VALID_COLUMN_TYPES.includes(columnType) ? columnType : 'text',
+                    }).then(created => { if (created) newColumn._apiId = created.id; })
+                );
+            }
         }
 
         function toggleColumnMenu(positionId, columnId, event) {
@@ -3317,6 +3464,12 @@
                 saveWorkspaceData();
                 renderAll();
                 showNotification(`✅ Column renamed to "${newName}"`);
+
+                // Sync to API (server keys values by column id, so values are preserved)
+                const colApiId = column._apiId || (typeof column.id === 'string' ? column.id : null);
+                if (isAuthenticated() && position._apiId && colApiId && currentWorkspaceId) {
+                    syncToApi(apiCall('PUT', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/columns/${colApiId}`, { name: newName }));
+                }
             };
 
             input.onblur = save;
@@ -3361,6 +3514,12 @@
             saveWorkspaceData();
             renderAll();
             showNotification(`✅ Column renamed to "${newName.trim()}"`);
+
+            // Sync to API (server keys values by column id, so values are preserved)
+            const colApiId = column._apiId || (typeof column.id === 'string' ? column.id : null);
+            if (isAuthenticated() && position._apiId && colApiId && currentWorkspaceId) {
+                syncToApi(apiCall('PUT', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/columns/${colApiId}`, { name: newName.trim() }));
+            }
         }
 
         function duplicateColumn(positionId, columnId, event) {
@@ -3392,6 +3551,25 @@
             saveWorkspaceData();
             renderAll();
             showNotification(`✅ Column "${copyName}" created!`);
+
+            // Sync to API: create the column, then copy each candidate's value into it
+            if (isAuthenticated() && position._apiId && currentWorkspaceId) {
+                syncToApi(
+                    apiCall('POST', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/columns`, {
+                        name: copyName,
+                        type: VALID_COLUMN_TYPES.includes(column.type) ? column.type : 'text',
+                    }).then(created => {
+                        if (!created) return;
+                        newColumn._apiId = created.id;
+                        const updates = position.candidates
+                            .filter(c => c._apiId && (c.data[copyName] || '') !== '')
+                            .map(c => apiCall('PATCH', `/positions/${position._apiId}/candidates/${c._apiId}/values`, {
+                                values: { [created.id]: String(c.data[copyName]) }
+                            }));
+                        return Promise.all(updates);
+                    })
+                );
+            }
         }
 
         function removeColumn(positionId, columnId, event) {
@@ -3420,6 +3598,7 @@
             if (!confirmed) return;
 
             console.log('Deleting column:', column.name);
+            const colApiId = column._apiId || (typeof column.id === 'string' ? column.id : null);
             position.columns = position.columns.filter(c => c.id !== columnId);
             position.candidates.forEach(candidate => {
                 delete candidate.data[column.name];
@@ -3429,6 +3608,11 @@
             renderAll();
             showNotification(`✅ Column "${column.name}" deleted`);
             console.log('Column deleted successfully');
+
+            // Sync to API
+            if (isAuthenticated() && position._apiId && colApiId && currentWorkspaceId) {
+                syncToApi(apiCall('DELETE', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/columns/${colApiId}`));
+            }
         }
 
         function showNotification(message, duration = 3000) {
@@ -3618,8 +3802,9 @@
                                 // Sync custom status + value to API
                                 if (isAuthenticated() && position._apiId) {
                                     syncToApi(
-                                        apiCall('PATCH', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/custom-statuses`, {
-                                            customStatuses: position.customStatuses
+                                        apiCall('POST', `/workspaces/${currentWorkspaceId}/positions/${position._apiId}/statuses`, {
+                                            name: trimmedStatus,
+                                            colorClass: assignedColor
                                         }).then(() => {
                                             const col = position.columns.find(c => c.name === columnName);
                                             const colId = col?._apiId || col?.id;
