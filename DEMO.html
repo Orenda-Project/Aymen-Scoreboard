@@ -355,6 +355,7 @@
             z-index: 1;
             background: white;
             box-shadow: 2px 0 6px rgba(0,0,0,0.08);
+            white-space: nowrap;
         }
 
         tr:hover td:first-child {
@@ -573,6 +574,17 @@
             border-left: 3px solid #faad14;
             padding: 8px;
             min-height: 60px;
+        }
+        /* Clamp long text (feedback paragraphs etc.) to 3 lines so rows stay compact.
+           Full text is shown when editing the cell or viewing the candidate. */
+        .cell-text {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            max-width: 320px;
+            min-width: 80px;
+            word-break: break-word;
         }
 
         .missing-feedback-alert {
@@ -3043,7 +3055,7 @@
                     if (columnName === 'Name') {
                         return `<strong>${value}</strong>`;
                     }
-                    return value || '-';
+                    return value ? `<div class="cell-text">${value}</div>` : '-';
 
                 case 'email':
                 case 'phone':
@@ -3133,7 +3145,7 @@
                     `;
 
                 default:
-                    return value || '-';
+                    return value ? `<div class="cell-text">${value}</div>` : '-';
             }
         }
 
