@@ -19,7 +19,9 @@ const PORT = process.env.PORT ?? 3001;
 app.set('trust proxy', 1);
 
 // ─── Security headers ─────────────────────────────────────────────────────────
-app.use(helmet());
+// CSP disabled: the UI (DEMO.html) is a single-file app with inline scripts,
+// which helmet's default script-src 'self' policy would block.
+app.use(helmet({ contentSecurityPolicy: false }));
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
@@ -69,12 +71,10 @@ app.get('/api/health', (_req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// ─── Serve frontend static files ──────────────────────────────────────────────
-const frontendDistPath = path.join(__dirname, '../../frontend/dist');
-app.use(express.static(frontendDistPath));
-app.get('/', (_req, res) => {
-  res.sendFile(path.join(frontendDistPath, 'index.html'));
-});
+// ─── Scoreboard UI (DEMO.html — single-file app) ──────────────────────────────
+// Resolves to repo root both locally (backend/src or backend/dist) and in Docker (/app)
+const demoPath = path.join(__dirname, '../..', 'DEMO.html');
+app.get('/', (_req, res) => res.sendFile(demoPath));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRouter);
@@ -92,9 +92,13 @@ app.use('/api/files', filesRouter);
 // Analytics
 app.use('/api/workspaces/:workspaceId/analytics', analyticsRouter);
 
-// ─── SPA fallback: serve index.html for non-API routes ──────────────────────────
-app.use((_req, res) => {
-  res.sendFile(path.join(frontendDistPath, 'index.html'));
+// ─── Fallback: API routes get 404, everything else gets the UI ────────────────
+app.use((req, res) => {
+  if (req.path.startsWith('/api/')) {
+    res.status(404).json({ error: 'Route not found' });
+    return;
+  }
+  res.sendFile(demoPath);
 });
 
 // ─── Global error handler ─────────────────────────────────────────────────────

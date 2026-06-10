@@ -4,26 +4,21 @@ RUN apt-get update -y && apt-get install -y openssl && rm -rf /var/lib/apt/lists
 
 WORKDIR /app
 
-# Copy and install backend deps first (layer cache)
+# Install backend deps (including devDependencies needed for build)
 COPY backend/package*.json ./backend/
 RUN cd backend && npm install --include=dev
 
-# Copy and install frontend deps
-COPY frontend/package*.json ./frontend/
-RUN cd frontend && npm install
-
-# Copy source (node_modules excluded via .dockerignore)
+# Copy backend source (node_modules excluded via .dockerignore)
 COPY backend ./backend
-COPY frontend ./frontend
 
-# Generate Prisma client for Alpine Linux (musl)
+# Generate Prisma client for Debian (openssl 3.x)
 RUN cd backend && npx prisma generate
 
 # Build backend TypeScript
 RUN cd backend && npm run build
 
-# Build frontend
-RUN cd frontend && VITE_API_BASE_URL=/api npm run build
+# The UI is a single self-contained HTML file served by the backend at /
+COPY DEMO.html ./DEMO.html
 
 ENV NODE_ENV=production
 
