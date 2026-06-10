@@ -2023,20 +2023,52 @@
                     return wss;
                 }
             } catch (e) { console.warn('[migration] could not parse workspaces store', e); }
-            try {
-                const old = JSON.parse(localStorage.getItem(STORAGE_KEY) || 'null');
-                if (Array.isArray(old?.positions) && old.positions.length > 0) {
-                    return [{
-                        name: 'Recruitment Scoreboard',
-                        description: 'Recovered from this browser',
-                        icon: '👥',
-                        color: '#1890ff',
-                        positions: old.positions,
-                    }];
-                }
-            } catch (e) { console.warn('[migration] could not parse legacy store', e); }
+            for (const key of [STORAGE_KEY, STORAGE_KEY + '_backup']) {
+                try {
+                    const old = JSON.parse(localStorage.getItem(key) || 'null');
+                    if (Array.isArray(old?.positions) && old.positions.length > 0) {
+                        return [{
+                            name: 'Recruitment Scoreboard',
+                            description: 'Recovered from this browser',
+                            icon: '👥',
+                            color: '#1890ff',
+                            positions: old.positions,
+                        }];
+                    }
+                } catch (e) { console.warn(`[migration] could not parse ${key}`, e); }
+            }
             return null;
         }
+
+        // ── Support helpers, callable from the browser console ──
+        // Shows what board data exists in this browser's localStorage.
+        window.sbInspectLocalData = function () {
+            const report = {};
+            for (const key of [WORKSPACES_STORAGE_KEY, STORAGE_KEY, STORAGE_KEY + '_backup']) {
+                const raw = localStorage.getItem(key);
+                if (!raw) { report[key] = 'empty'; continue; }
+                try {
+                    const d = JSON.parse(raw);
+                    const wss = d.workspaces || (Array.isArray(d.positions) ? [{ positions: d.positions }] : []);
+                    report[key] = {
+                        sizeKB: Math.round(raw.length / 1024 * 10) / 10,
+                        workspaces: (d.workspaces || []).length,
+                        positions: wss.reduce((s, w) => s + (w.positions || []).length, 0),
+                        candidates: wss.reduce((s, w) => s + (w.positions || []).reduce((x, p) => x + (p.candidates || []).length, 0), 0),
+                    };
+                } catch { report[key] = { sizeKB: Math.round(raw.length / 1024 * 10) / 10, error: 'unparseable' }; }
+            }
+            report.migrationFlag = localStorage.getItem(MIGRATED_FLAG) || 'not set';
+            console.table(report);
+            return report;
+        };
+
+        // Re-runs the local-data upload (only proceeds if the server board is still empty).
+        window.sbForceMigrate = async function () {
+            if (!isAuthenticated()) { console.error('Please log in first, then run sbForceMigrate() again.'); return; }
+            localStorage.removeItem(MIGRATED_FLAG);
+            await loadFromAPI();
+        };
 
         // Uploads every locally stored workspace/position/column/status/candidate to the API.
         async function migrateLocalDataToServer(localWorkspaces, existingApiWorkspaces) {
@@ -2403,6 +2435,9 @@
 
         // Save workspaces to localStorage
         function saveWorkspaces() {
+            // While signed in, the server is the source of truth. Never overwrite
+            // the local archive — it may hold pre-migration data needed for recovery.
+            if (isAuthenticated()) return;
             const data = {
                 workspaces: workspaces,
                 nextWorkspaceId: nextWorkspaceId,
