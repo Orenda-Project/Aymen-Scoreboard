@@ -2008,6 +2008,10 @@
 
         const VALID_COLUMN_TYPES = ['text', 'status', 'date', 'file', 'percentage', 'number', 'email', 'phone'];
 
+        // IDs are numbers in localStorage mode but UUID strings in API mode —
+        // compare them type-insensitively everywhere.
+        const sameId = (a, b) => String(a) === String(b);
+
         // ========================================
         // ONE-TIME MIGRATION: localStorage → server
         // ========================================
@@ -2289,6 +2293,7 @@
                 currentWorkspaceId = workspaces[0]?.id || null;
                 renderWorkspaceList();
                 await loadPositionsFromAPI();
+                renderWorkspaceList(); // refresh sidebar counts now that positions are loaded
                 renderAll();
             } catch (err) {
                 console.error('[loadFromAPI]', err);
@@ -2450,7 +2455,7 @@
 
         // Get current workspace
         function getCurrentWorkspace() {
-            return workspaces.find(w => w.id === currentWorkspaceId);
+            return workspaces.find(w => sameId(w.id, currentWorkspaceId));
         }
 
         // Switch workspace
@@ -2460,6 +2465,7 @@
             renderWorkspaceList();
             if (isAuthenticated()) {
                 await loadPositionsFromAPI();
+                renderWorkspaceList(); // refresh sidebar counts now that positions are loaded
             } else {
                 loadWorkspaceData();
             }
@@ -2472,12 +2478,12 @@
             if (!container) return;
 
             container.innerHTML = workspaces.map(workspace => {
-                const isActive = workspace.id === currentWorkspaceId;
+                const isActive = sameId(workspace.id, currentWorkspaceId);
                 const positionCount = workspace.positions?.length || 0;
                 const candidateCount = workspace.positions?.reduce((sum, p) => sum + (p.candidates?.length || 0), 0) || 0;
 
                 return `
-                    <div class="workspace-item ${isActive ? 'active' : ''}" onclick="switchWorkspace(${workspace.id})">
+                    <div class="workspace-item ${isActive ? 'active' : ''}" onclick="switchWorkspace('${workspace.id}')">
                         <div class="workspace-icon" style="background: ${workspace.color};">
                             ${workspace.icon || '📋'}
                         </div>
@@ -2486,10 +2492,10 @@
                             <div class="workspace-meta">${positionCount} position${positionCount !== 1 ? 's' : ''} · ${candidateCount} candidate${candidateCount !== 1 ? 's' : ''}</div>
                         </div>
                         <div class="workspace-actions">
-                            <button class="workspace-action-btn" onclick="event.stopPropagation(); renameWorkspace(${workspace.id})" title="Rename">
+                            <button class="workspace-action-btn" onclick="event.stopPropagation(); renameWorkspace('${workspace.id}')" title="Rename">
                                 ✏️
                             </button>
-                            <button class="workspace-action-btn" onclick="event.stopPropagation(); deleteWorkspace(${workspace.id})" title="Delete">
+                            <button class="workspace-action-btn" onclick="event.stopPropagation(); deleteWorkspace('${workspace.id}')" title="Delete">
                                 🗑️
                             </button>
                         </div>
@@ -2563,7 +2569,7 @@
 
         // Rename workspace
         function renameWorkspace(workspaceId) {
-            const workspace = workspaces.find(w => w.id === workspaceId);
+            const workspace = workspaces.find(w => sameId(w.id, workspaceId));
             if (!workspace) return;
 
             const newName = prompt(`Rename workspace:`, workspace.name);
@@ -2585,7 +2591,7 @@
                 return;
             }
 
-            const workspace = workspaces.find(w => w.id === workspaceId);
+            const workspace = workspaces.find(w => sameId(w.id, workspaceId));
             if (!workspace) return;
 
             if (!confirm(`Delete workspace "${workspace.name}"?\n\nThis will delete all positions and candidates in this workspace. This cannot be undone.`)) {
@@ -2593,7 +2599,7 @@
             }
 
             const apiId = workspace._apiId;
-            workspaces = workspaces.filter(w => w.id !== workspaceId);
+            workspaces = workspaces.filter(w => !sameId(w.id, workspaceId));
 
             // Switch to first remaining workspace if current was deleted
             if (currentWorkspaceId === workspaceId) {
@@ -2645,7 +2651,7 @@
 
         // Toggle position active status
         function togglePositionActive(positionId) {
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
             position.isActive = !position.isActive;
@@ -2670,8 +2676,8 @@
         function showReminderModal(event, positionId, candidateId) {
             event.stopPropagation();
 
-            const position = positions.find(p => p.id === positionId);
-            const candidate = position && position.candidates.find(c => c.id === candidateId);
+            const position = positions.find(p => sameId(p.id, positionId));
+            const candidate = position && position.candidates.find(c => sameId(c.id, candidateId));
             if (!position || !candidate) return;
 
             _reminderContext = { position, candidate };
@@ -2856,7 +2862,7 @@
             header.className = `position-header ${position.collapsed ? 'collapsed' : ''}`;
             header.style.borderLeftColor = position.color;
             header.innerHTML = `
-                <span class="collapse-icon ${position.collapsed ? 'collapsed' : ''}" onclick="togglePosition(${position.id})">▼</span>
+                <span class="collapse-icon ${position.collapsed ? 'collapsed' : ''}" onclick="togglePosition('${position.id}')">▼</span>
                 <span class="position-name">
                     ${position.isActive ? '⭐ ' : ''}${position.name}
                     ${position.isActive ? '<span class="active-badge">Active</span>' : ''}
@@ -2864,10 +2870,10 @@
                 <span class="position-count">${position.candidates.length} candidate${position.candidates.length !== 1 ? 's' : ''}</span>
                 <div class="position-actions">
                     <button class="btn-toggle-active ${position.isActive ? 'active' : ''}"
-                            onclick="event.stopPropagation(); togglePositionActive(${position.id})">
+                            onclick="event.stopPropagation(); togglePositionActive('${position.id}')">
                         ${position.isActive ? '✓ Active' : 'Mark Active'}
                     </button>
-                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); deletePosition(${position.id})">🗑️ Delete Position</button>
+                    <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); deletePosition('${position.id}')">🗑️ Delete Position</button>
                 </div>
             `;
             group.appendChild(header);
@@ -2914,12 +2920,12 @@
                 } else {
                     th.innerHTML = `
                         <div class="column-header">
-                            <span class="column-name-text" ondblclick="editColumnNameInline(${position.id}, ${col.id}, event)" style="cursor: pointer;" title="Double-click to edit">${col.name}</span>
-                            <span class="column-menu-icon" onclick="toggleColumnMenu(${position.id}, ${col.id}, event)">⋮</span>
+                            <span class="column-name-text" ondblclick="editColumnNameInline('${position.id}', '${col.id}', event)" style="cursor: pointer;" title="Double-click to edit">${col.name}</span>
+                            <span class="column-menu-icon" onclick="toggleColumnMenu('${position.id}', '${col.id}', event)">⋮</span>
                             <div class="column-dropdown" id="dropdown-${position.id}-${col.id}">
-                                <div class="dropdown-item" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => editColumnName(${position.id}, ${col.id}, {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">✏️ Edit name</div>
-                                <div class="dropdown-item" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => duplicateColumn(${position.id}, ${col.id}, {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">📋 Duplicate column</div>
-                                <div class="dropdown-item danger" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => removeColumn(${position.id}, ${col.id}, {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">🗑️ Delete column</div>
+                                <div class="dropdown-item" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => editColumnName('${position.id}', '${col.id}', {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">✏️ Edit name</div>
+                                <div class="dropdown-item" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => duplicateColumn('${position.id}', '${col.id}', {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">📋 Duplicate column</div>
+                                <div class="dropdown-item danger" onclick="(function(e){e.stopPropagation(); closeAllColumnMenus(); setTimeout(() => removeColumn('${position.id}', '${col.id}', {stopPropagation:()=>{},preventDefault:()=>{}}), 10);})(event)">🗑️ Delete column</div>
                             </div>
                         </div>
                     `;
@@ -2932,7 +2938,7 @@
             const addColTh = document.createElement('th');
             addColTh.style.width = '60px';
             addColTh.style.textAlign = 'center';
-            addColTh.innerHTML = `<button class="add-column-btn" onclick="showQuickAddColumn(${position.id}, event)" title="Add Column">➕</button>`;
+            addColTh.innerHTML = `<button class="add-column-btn" onclick="showQuickAddColumn('${position.id}', event)" title="Add Column">➕</button>`;
             header.appendChild(addColTh);
 
             const actionTh = document.createElement('th');
@@ -2946,14 +2952,19 @@
 
             tbody.innerHTML = '';
 
-            // Render existing candidates
+            // Render existing candidates — one broken cell must not blank the whole table
             position.candidates.forEach(candidate => {
                 const tr = document.createElement('tr');
 
                 position.columns.filter(col => col.visible !== false).forEach(col => {
                     const td = document.createElement('td');
                     const value = candidate.data[col.name] || '';
-                    td.innerHTML = renderCell(col.type, value, col.name, position, candidate);
+                    try {
+                        td.innerHTML = renderCell(col.type, value, col.name, position, candidate);
+                    } catch (err) {
+                        console.error('[renderCell]', position.name, col.name, candidate.id, err);
+                        td.textContent = String(value) || '-';
+                    }
 
                     // Make cells editable (email/phone are hidden, file type has its own handlers)
                     if (col.type !== 'file' && col.type !== 'email' && col.type !== 'phone') {
@@ -2970,8 +2981,8 @@
 
                 const actionTd = document.createElement('td');
                 actionTd.innerHTML = `
-                    <button class="action-btn" onclick="viewCandidate(${position.id}, ${candidate.id})">View</button>
-                    <button class="action-btn danger" onclick="deleteCandidate(${position.id}, ${candidate.id})">Delete</button>
+                    <button class="action-btn" onclick="viewCandidate('${position.id}', '${candidate.id}')">View</button>
+                    <button class="action-btn danger" onclick="deleteCandidate('${position.id}', '${candidate.id}')">Delete</button>
                 `;
                 tr.appendChild(actionTd);
 
@@ -2988,7 +2999,7 @@
             addTd.colSpan = totalColumns;
             addTd.style.padding = '12px 16px';
             addTd.innerHTML = `
-                <button onclick="showAddCandidate(${position.id})" style="
+                <button onclick="showAddCandidate('${position.id}')" style="
                     background: none;
                     border: none;
                     color: #1890ff;
@@ -3019,7 +3030,7 @@
                                 ⚠️ Feedback missing
                             </div>
                             <button class="btn-send-reminder"
-                                    onclick="event.stopPropagation(); showReminderModal(event, ${position.id}, ${candidate.id})">
+                                    onclick="event.stopPropagation(); showReminderModal(event, '${position.id}', '${candidate.id}')">
                                 🔔 Send Reminder
                             </button>
                         </div>
@@ -3127,7 +3138,7 @@
         }
 
         function togglePosition(positionId) {
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
             position.collapsed = !position.collapsed;
@@ -3182,7 +3193,7 @@
         }
 
         function deletePosition(positionId) {
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
             if (!confirm(`Are you sure you want to delete the "${position.name}" position? All candidates and data will be lost.`)) {
@@ -3190,7 +3201,7 @@
             }
 
             const posApiId = position._apiId;
-            positions = positions.filter(p => p.id !== positionId);
+            positions = positions.filter(p => !sameId(p.id, positionId));
             renderAll();
             showNotification(`✅ Position "${position.name}" deleted`);
             if (isAuthenticated() && posApiId && currentWorkspaceId) {
@@ -3204,7 +3215,7 @@
         }
 
         function addCandidate() {
-            const positionId = parseInt(document.getElementById('candidatePositionId').value);
+            const positionId = document.getElementById('candidatePositionId').value;
             const name = document.getElementById('candidateName').value.trim();
             const email = document.getElementById('candidateEmail').value.trim();
             const phone = document.getElementById('candidatePhone').value.trim();
@@ -3215,7 +3226,7 @@
                 return;
             }
 
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
             const newCandidate = {
@@ -3269,11 +3280,11 @@
                 return;
             }
 
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
-            const candApiId = position.candidates.find(c => c.id === candidateId)?._apiId;
-            position.candidates = position.candidates.filter(c => c.id !== candidateId);
+            const candApiId = position.candidates.find(c => sameId(c.id, candidateId))?._apiId;
+            position.candidates = position.candidates.filter(c => !sameId(c.id, candidateId));
             renderAll();
             if (isAuthenticated() && position._apiId && candApiId) {
                 syncToApi(apiCall('DELETE', `/positions/${position._apiId}/candidates/${candApiId}`));
@@ -3281,10 +3292,10 @@
         }
 
         function viewCandidate(positionId, candidateId) {
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
-            const candidate = position.candidates.find(c => c.id === candidateId);
+            const candidate = position.candidates.find(c => sameId(c.id, candidateId));
             if (!candidate) return;
 
             const name = candidate.data['Name'] || 'N/A';
@@ -3351,7 +3362,7 @@
         }
 
         function addNewColumn() {
-            const positionId = parseInt(document.getElementById('columnPositionId').value);
+            const positionId = document.getElementById('columnPositionId').value;
             const columnName = document.getElementById('newColumnName').value.trim();
             const columnType = document.getElementById('newColumnType').value;
 
@@ -3360,7 +3371,7 @@
                 return;
             }
 
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
             // Check if column name already exists
@@ -3450,10 +3461,10 @@
 
         function editColumnNameInline(positionId, columnId, event) {
             event.stopPropagation();
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
-            const column = position.columns.find(c => c.id === columnId);
+            const column = position.columns.find(c => sameId(c.id, columnId));
             if (!column || column.fixed) return;
 
             const span = event.target;
@@ -3479,7 +3490,7 @@
                 }
 
                 // Check if name already exists
-                if (position.columns.some(c => c.name === newName && c.id !== columnId)) {
+                if (position.columns.some(c => c.name === newName && !sameId(c.id, columnId))) {
                     alert('⚠️ A column with this name already exists');
                     renderAll();
                     return;
@@ -3520,17 +3531,17 @@
         function editColumnName(positionId, columnId, event) {
             event.stopPropagation();
             closeAllColumnMenus();
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
-            const column = position.columns.find(c => c.id === columnId);
+            const column = position.columns.find(c => sameId(c.id, columnId));
             if (!column || column.fixed) return;
 
             const newName = prompt(`Edit column name:`, column.name);
             if (!newName || newName.trim() === '' || newName === column.name) return;
 
             // Check if new name already exists
-            if (position.columns.some(c => c.name === newName.trim() && c.id !== columnId)) {
+            if (position.columns.some(c => c.name === newName.trim() && !sameId(c.id, columnId))) {
                 alert('⚠️ A column with this name already exists');
                 return;
             }
@@ -3560,10 +3571,10 @@
         function duplicateColumn(positionId, columnId, event) {
             event.stopPropagation();
             closeAllColumnMenus();
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
-            const column = position.columns.find(c => c.id === columnId);
+            const column = position.columns.find(c => sameId(c.id, columnId));
             if (!column) return;
 
             // Create copy of column
@@ -3612,13 +3623,13 @@
             event.stopPropagation();
             closeAllColumnMenus();
 
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) {
                 console.log('Position not found');
                 return;
             }
 
-            const column = position.columns.find(c => c.id === columnId);
+            const column = position.columns.find(c => sameId(c.id, columnId));
             if (!column) {
                 console.log('Column not found');
                 return;
@@ -3634,7 +3645,7 @@
 
             console.log('Deleting column:', column.name);
             const colApiId = column._apiId || (typeof column.id === 'string' ? column.id : null);
-            position.columns = position.columns.filter(c => c.id !== columnId);
+            position.columns = position.columns.filter(c => !sameId(c.id, columnId));
             position.candidates.forEach(candidate => {
                 delete candidate.data[column.name];
             });
@@ -3697,10 +3708,10 @@
                 return;
             }
 
-            const position = positions.find(p => p.id === positionId);
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position) return;
 
-            const candidate = position.candidates.find(c => c.id === candidateId);
+            const candidate = position.candidates.find(c => sameId(c.id, candidateId));
             if (!candidate) return;
 
             let inputElement;
@@ -3965,8 +3976,8 @@
                 const rowIndex = Array.from(tbody.children).indexOf(row);
 
                 // Find position and candidate
-                const positionId = parseInt(tbody.id.replace('tbody-', ''));
-                const position = positions.find(p => p.id === positionId);
+                const positionId = tbody.id.replace('tbody-', '');
+                const position = positions.find(p => sameId(p.id, positionId));
                 console.log('Position:', position, 'Row index:', rowIndex);
 
                 if (!position || rowIndex >= position.candidates.length) {
@@ -4027,8 +4038,8 @@
             const tbody = row.closest('tbody');
             const rowIndex = Array.from(tbody.children).indexOf(row);
 
-            const positionId = parseInt(tbody.id.replace('tbody-', ''));
-            const position = positions.find(p => p.id === positionId);
+            const positionId = tbody.id.replace('tbody-', '');
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position || rowIndex >= position.candidates.length) return;
 
             const candidate = position.candidates[rowIndex];
@@ -4075,8 +4086,8 @@
             const tbody = row.closest('tbody');
             const rowIndex = Array.from(tbody.children).indexOf(row);
 
-            const positionId = parseInt(tbody.id.replace('tbody-', ''));
-            const position = positions.find(p => p.id === positionId);
+            const positionId = tbody.id.replace('tbody-', '');
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position || rowIndex >= position.candidates.length) return;
 
             const candidate = position.candidates[rowIndex];
@@ -4132,8 +4143,8 @@
             const tbody = row.closest('tbody');
             const rowIndex = Array.from(tbody.children).indexOf(row);
 
-            const positionId = parseInt(tbody.id.replace('tbody-', ''));
-            const position = positions.find(p => p.id === positionId);
+            const positionId = tbody.id.replace('tbody-', '');
+            const position = positions.find(p => sameId(p.id, positionId));
             if (!position || rowIndex >= position.candidates.length) return;
 
             const candidate = position.candidates[rowIndex];
@@ -4531,8 +4542,8 @@
         // Save after inline edits
         const originalMakeEditable = makeEditable;
         makeEditable = function(positionId, candidateId, columnName, columnType, cell, currentValue) {
-            const position = positions.find(p => p.id === positionId);
-            const candidate = position?.candidates.find(c => c.id === candidateId);
+            const position = positions.find(p => sameId(p.id, positionId));
+            const candidate = position?.candidates.find(c => sameId(c.id, candidateId));
 
             if (position && candidate) {
                 // Call original function

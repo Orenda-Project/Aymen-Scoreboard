@@ -11,3 +11,4 @@ frontend/dist/
 __pycache__/
 *.pyc
 backend/.buildcache
+.debug/
