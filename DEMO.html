@@ -2326,6 +2326,9 @@
 
                 positions = await Promise.all(apiPositions.map(async p => {
                     const candidates = await apiCall('GET', `/positions/${p.id}/candidates`) || [];
+                    // Map column id → name so we can attach uploaded files to their column cells
+                    const colNameById = {};
+                    for (const c of (p.columns || [])) colNameById[c.id] = c.name;
                     return {
                         id: p.id,
                         _apiId: p.id,
@@ -2341,11 +2344,23 @@
                         customStatuses: (p.customStatuses || []).map(s => ({
                             id: s.id, name: s.name, colorClass: s.colorClass,
                         })),
-                        candidates: candidates.map(c => ({
-                            id: c.id, _apiId: c.id,
-                            data: c.data || {},
-                            _files: c.files || [],
-                        })),
+                        candidates: candidates.map(c => {
+                            const data = c.data || {};
+                            // Merge uploaded files into the data map under their column name,
+                            // in the shape the file-cell renderer expects ({ name, type, size, _fileId }).
+                            for (const f of (c.files || [])) {
+                                const colName = colNameById[f.columnId];
+                                if (colName) {
+                                    data[colName] = {
+                                        name: f.originalName,
+                                        type: f.mimeType,
+                                        size: f.sizeBytes,
+                                        _fileId: f.id,
+                                    };
+                                }
+                            }
+                            return { id: c.id, _apiId: c.id, data, _files: c.files || [] };
+                        }),
                         nextCandidateId: 1,
                         nextColumnId: 1,
                     };
