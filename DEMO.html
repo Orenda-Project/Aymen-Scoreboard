@@ -547,6 +547,69 @@
             font-weight: 500;
         }
 
+        /* ── Status filter bar ───────────────────────────────────────── */
+        .status-filter-bar {
+            display: flex;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-bottom: 16px;
+            padding: 12px 16px;
+            background: #fff;
+            border: 1px solid #f0f0f0;
+            border-radius: 8px;
+        }
+        .status-filter-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: #555;
+            margin-right: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .status-filter-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 16px;
+            border: 1px solid #d9d9d9;
+            background: #fafafa;
+            color: #555;
+            font-size: 13px;
+            cursor: pointer;
+            user-select: none;
+            transition: all 0.15s;
+        }
+        .status-filter-chip:hover {
+            border-color: #1890ff;
+            color: #1890ff;
+        }
+        .status-filter-chip.selected {
+            background: #1890ff;
+            border-color: #1890ff;
+            color: #fff;
+            font-weight: 500;
+        }
+        .status-filter-chip .chip-count {
+            font-size: 11px;
+            opacity: 0.75;
+        }
+        .status-filter-clear {
+            margin-left: auto;
+            background: none;
+            border: none;
+            color: #1890ff;
+            font-size: 13px;
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .status-filter-clear:hover {
+            background: #e6f7ff;
+        }
+
         .btn-toggle-active {
             background: transparent;
             border: 1px solid #d9d9d9;
@@ -1479,6 +1542,9 @@
 
         <!-- Main Table View -->
         <div id="tableView" class="view-container active">
+            <!-- Status Filter Bar (populated by renderStatusFilterBar) -->
+            <div id="statusFilterBar" class="status-filter-bar" style="display: none;"></div>
+
             <!-- Add Position Button -->
             <button class="add-position-btn" onclick="showModal('newPositionModal')">
                 ➕ Add New Position
@@ -2862,7 +2928,115 @@
 
         let nextPositionId = 3;
 
+        // ========================================
+        // STATUS FILTER
+        // ========================================
+
+        let _statusFilter = new Set(); // selected status values; empty = show all
+
+        // The status column for a position (first column of type 'status')
+        function getStatusColumn(position) {
+            return position.columns.find(c => c.type === 'status');
+        }
+
+        // A candidate's current status value (trimmed string, or '')
+        function getCandidateStatus(position, candidate) {
+            const col = getStatusColumn(position);
+            if (!col) return '';
+            const v = candidate.data[col.name];
+            return typeof v === 'string' ? v.trim() : '';
+        }
+
+        // True if a candidate should be shown given the active filter
+        function candidateMatchesFilter(position, candidate) {
+            if (_statusFilter.size === 0) return true;
+            return _statusFilter.has(getCandidateStatus(position, candidate));
+        }
+
+        // Count of candidates matching the filter in a position
+        function filteredCount(position) {
+            return position.candidates.filter(c => candidateMatchesFilter(position, c)).length;
+        }
+
+        // Collect distinct status values across all positions with their counts
+        function collectStatusCounts() {
+            const counts = new Map();
+            positions.forEach(pos => {
+                pos.candidates.forEach(c => {
+                    const s = getCandidateStatus(pos, c);
+                    if (s) counts.set(s, (counts.get(s) || 0) + 1);
+                });
+            });
+            return counts;
+        }
+
+        // Order statuses sensibly: known pipeline order first, then any custom ones
+        const STATUS_ORDER = ['New', 'Shortlisted', 'Interview', 'Offered', 'Hired', 'Rejected'];
+        function sortedStatuses(keys) {
+            return [...keys].sort((a, b) => {
+                const ia = STATUS_ORDER.indexOf(a), ib = STATUS_ORDER.indexOf(b);
+                if (ia !== -1 && ib !== -1) return ia - ib;
+                if (ia !== -1) return -1;
+                if (ib !== -1) return 1;
+                return a.localeCompare(b);
+            });
+        }
+
+        function renderStatusFilterBar() {
+            const bar = document.getElementById('statusFilterBar');
+            if (!bar) return;
+            const counts = collectStatusCounts();
+            if (counts.size === 0) {
+                // Nothing to filter; drop any stale selection and hide the bar
+                if (_statusFilter.size) _statusFilter.clear();
+                bar.style.display = 'none';
+                bar.innerHTML = '';
+                return;
+            }
+            const chips = sortedStatuses(counts.keys()).map(s => {
+                const sel = _statusFilter.has(s) ? 'selected' : '';
+                const safe = s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const attr = s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+                return `<div class="status-filter-chip ${sel}" onclick="toggleStatusFilter('${attr}')">
+                    ${safe} <span class="chip-count">${counts.get(s)}</span>
+                </div>`;
+            }).join('');
+            const clearBtn = _statusFilter.size
+                ? `<button class="status-filter-clear" onclick="clearStatusFilter()">✕ Clear filter (${_statusFilter.size})</button>`
+                : '';
+            bar.innerHTML = `<span class="status-filter-label">🔎 Filter by status:</span>${chips}${clearBtn}`;
+            bar.style.display = 'flex';
+        }
+
+        function toggleStatusFilter(status) {
+            if (_statusFilter.has(status)) _statusFilter.delete(status);
+            else _statusFilter.add(status);
+            renderStatusFilterBar();
+            // Re-render position tables (row visibility + counts) without full reload
+            positions.forEach(p => { renderTableBody(p); updatePositionCount(p); });
+        }
+
+        function clearStatusFilter() {
+            _statusFilter.clear();
+            renderStatusFilterBar();
+            positions.forEach(p => { renderTableBody(p); updatePositionCount(p); });
+        }
+
+        // Update the "X candidates" pill in a position header to reflect the filter
+        function updatePositionCount(position) {
+            const el = document.querySelector(`#position-${position.id} .position-count`);
+            if (!el) return;
+            const total = position.candidates.length;
+            if (_statusFilter.size > 0) {
+                el.textContent = `${filteredCount(position)} of ${total} candidate${total !== 1 ? 's' : ''}`;
+            } else {
+                el.textContent = `${total} candidate${total !== 1 ? 's' : ''}`;
+            }
+        }
+
         function renderAll() {
+            renderStatusFilterBar();
+
             const container = document.getElementById('positionsContainer');
             container.innerHTML = '';
 
@@ -2922,6 +3096,7 @@
             // Render table after adding to DOM
             setTimeout(() => {
                 renderPositionTable(position);
+                updatePositionCount(position);
             }, 0);
 
             return group;
@@ -3012,6 +3187,12 @@
                     <button class="action-btn danger" onclick="deleteCandidate('${position.id}', '${candidate.id}')">Delete</button>
                 `;
                 tr.appendChild(actionTd);
+
+                // Apply status filter by hiding (not removing) non-matching rows so the
+                // row-index lookups in file/edit handlers stay aligned with position.candidates
+                if (!candidateMatchesFilter(position, candidate)) {
+                    tr.style.display = 'none';
+                }
 
                 tbody.appendChild(tr);
             });
