@@ -16,7 +16,8 @@ model User {
   id           String   @id @default(uuid())
   name         String
   email        String   @unique
-  passwordHash String   @map("password_hash")
+  passwordHash String?  @map("password_hash") // nullable: Google-SSO users have no password
+  googleId     String?  @unique @map("google_id")
   avatarUrl    String?  @map("avatar_url")
   isVerified   Boolean  @default(false) @map("is_verified")
   createdAt    DateTime @default(now()) @map("created_at")
@@ -27,6 +28,7 @@ model User {
   workspacesCreated      Workspace[]       @relation("WorkspaceCreatedBy")
   workspaceMembers       WorkspaceMember[]
   invitationsSent        Invitation[]      @relation("InvitedBy")
+  authorizedEmailsAdded  AuthorizedEmail[] @relation("AuthorizedEmailAddedBy")
   positionsCreated       Position[]        @relation("PositionCreatedBy")
   candidatesCreated      Candidate[]       @relation("CandidateCreatedBy")
   candidateValuesUpdated CandidateValue[]  @relation("CandidateValueUpdatedBy")
@@ -34,6 +36,19 @@ model User {
   auditLogs              AuditLog[]
 
   @@map("users")
+}
+
+// Allowlist of emails authorized to sign in / create an account. Only emails
+// listed here (added by a board owner) may register or use Google SSO.
+model AuthorizedEmail {
+  id        String   @id @default(uuid())
+  email     String   @unique // always stored lowercased
+  addedById String   @map("added_by")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  addedBy User @relation("AuthorizedEmailAddedBy", fields: [addedById], references: [id], onDelete: Cascade)
+
+  @@map("authorized_emails")
 }
 
 model RefreshToken {

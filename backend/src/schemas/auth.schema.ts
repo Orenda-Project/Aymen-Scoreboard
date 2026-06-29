@@ -32,5 +32,9 @@ export const resetPasswordSchema = z.object({
     .regex(/[0-9]/),
 });
 
+export const googleAuthSchema = z.object({
+  credential: z.string().min(1),
+});
+
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;

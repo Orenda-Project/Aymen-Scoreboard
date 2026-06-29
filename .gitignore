@@ -12,3 +12,6 @@ __pycache__/
 *.pyc
 backend/.buildcache
 .debug/
+
+# local DB backups (contain data — never commit)
+backend/prisma/*-backup-*.json

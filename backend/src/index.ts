@@ -9,6 +9,7 @@ import rateLimit from 'express-rate-limit';
 import path from 'path';
 
 import authRouter from './routes/auth';
+import accessRouter from './routes/access';
 import workspacesRouter from './routes/workspaces';
 import positionsRouter from './routes/positions';
 import candidatesRouter from './routes/candidates';
@@ -81,6 +82,7 @@ app.get('/', (_req, res) => res.sendFile(demoPath));
 
 // ─── Routes ───────────────────────────────────────────────────────────────────
 app.use('/api/auth', authRouter);
+app.use('/api/access', accessRouter);
 app.use('/api/workspaces', workspacesRouter);
 
 // Positions nested under workspaces

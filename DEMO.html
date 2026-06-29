@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recruitment Scoreboard - Multi-Position Demo</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
     <style>
         * {
             margin: 0;
@@ -1422,6 +1423,64 @@
             transition: background 0.2s;
         }
         .auth-btn:hover { background: #096dd9; }
+        .auth-divider {
+            display: flex;
+            align-items: center;
+            text-align: center;
+            color: #bbb;
+            font-size: 12px;
+            margin: 16px 0 12px;
+        }
+        .auth-divider::before,
+        .auth-divider::after {
+            content: '';
+            flex: 1;
+            border-bottom: 1px solid #eee;
+        }
+        .auth-divider span { padding: 0 12px; }
+
+        /* Manage Access modal */
+        .ma-row {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 12px;
+            border: 1px solid #f0f0f0;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+        .ma-row .ma-email { flex: 1; font-size: 14px; word-break: break-all; }
+        .ma-row .ma-tag {
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            background: #f6ffed;
+            color: #52c41a;
+            border: 1px solid #b7eb8f;
+        }
+        .ma-row .ma-tag.pending {
+            background: #fffbe6;
+            color: #d48806;
+            border-color: #ffe58f;
+        }
+        .ma-remove {
+            background: none;
+            border: none;
+            color: #ff4d4f;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px 8px;
+            border-radius: 4px;
+        }
+        .ma-remove:hover { background: #fff1f0; }
+        .ma-add-row { display: flex; gap: 8px; margin-bottom: 16px; }
+        .ma-add-row input {
+            flex: 1;
+            padding: 10px;
+            border: 1px solid #d9d9d9;
+            border-radius: 6px;
+            font-size: 14px;
+        }
 
         /* ── User display in header ─────────────────── */
         .header-right {
@@ -1515,6 +1574,7 @@
                         <div class="user-avatar" id="userAvatar">?</div>
                         <span id="userDisplayName"></span>
                     </div>
+                    <button class="btn-logout" id="manageAccessBtn" style="display:none;" onclick="showManageAccess()">🔐 Manage Access</button>
                     <button class="btn-logout" id="logoutBtn" style="display:none;" onclick="logout()">Sign out</button>
                     <button class="btn btn-primary" onclick="showModal('newPositionModal')">
                         ➕ Add New Position
@@ -1967,6 +2027,33 @@
                 <div class="auth-error" id="registerError"></div>
                 <button class="auth-btn" onclick="doRegister()">Create Account</button>
             </div>
+
+            <!-- Google SSO — shown for both tabs; stays hidden until configured -->
+            <div id="googleSection" style="display:none;">
+                <div class="auth-divider"><span>or</span></div>
+                <div id="googleBtn" style="display:flex; justify-content:center;"></div>
+                <div class="auth-error" id="googleError"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Manage Access modal (owner only) -->
+    <div class="auth-overlay" id="manageAccessModal" style="display:none;">
+        <div class="auth-box" style="max-width:480px; text-align:left;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                <div class="auth-title" style="margin:0;">🔐 Manage Access</div>
+                <button class="ma-remove" style="color:#999; font-size:18px;" onclick="hideManageAccess()">✕</button>
+            </div>
+            <div class="auth-subtitle" style="text-align:left; margin-bottom:16px;">
+                People you authorize can sign in (with Google or a password) and edit this board.
+            </div>
+            <div class="ma-add-row">
+                <input type="email" id="maEmailInput" placeholder="name@example.com"
+                       onkeydown="if(event.key==='Enter')addAuthorizedEmail()">
+                <button class="auth-btn" style="width:auto; padding:10px 16px;" onclick="addAuthorizedEmail()">Authorize</button>
+            </div>
+            <div class="auth-error" id="maError"></div>
+            <div id="maList"></div>
         </div>
     </div>
 
@@ -2267,6 +2354,7 @@
                 if (!data) return;
                 setTokens(data.accessToken, data.refreshToken);
                 currentUser = data.user;
+                window.canManageAccess = !!data.canManageAccess;
                 hideAuthModal();
                 updateUserDisplay();
                 await loadFromAPI();
@@ -2286,6 +2374,7 @@
                 if (!data) return;
                 setTokens(data.accessToken, data.refreshToken);
                 currentUser = data.user;
+                window.canManageAccess = !!data.canManageAccess;
                 hideAuthModal();
                 updateUserDisplay();
                 await loadFromAPI();
@@ -2298,6 +2387,7 @@
                 if (_refreshToken) await apiCall('POST', '/auth/logout', { refreshToken: _refreshToken });
             } catch {}
             clearTokens();
+            window.canManageAccess = false;
             workspaces = []; positions = []; currentWorkspaceId = null;
             updateUserDisplay();
             showAuthModal();
@@ -2308,15 +2398,123 @@
             const name   = document.getElementById('userDisplayName');
             const avatar = document.getElementById('userAvatar');
             const btn    = document.getElementById('logoutBtn');
+            const maBtn  = document.getElementById('manageAccessBtn');
             if (currentUser) {
                 name.textContent   = currentUser.name;
                 avatar.textContent = currentUser.name.charAt(0).toUpperCase();
                 chip.style.display = 'flex';
                 btn.style.display  = 'inline-block';
+                if (maBtn) maBtn.style.display = window.canManageAccess ? 'inline-block' : 'none';
             } else {
                 chip.style.display = 'none';
                 btn.style.display  = 'none';
+                if (maBtn) maBtn.style.display = 'none';
             }
+        }
+
+        // ========================================
+        // GOOGLE SIGN-IN (GIS ID-token flow)
+        // ========================================
+
+        async function initGoogle() {
+            let cfg;
+            try {
+                cfg = await fetch(`${API_BASE}/auth/config`).then(r => r.json());
+            } catch { return; }
+            if (!cfg || !cfg.googleClientId) return; // not configured → leave Google hidden
+
+            // GIS script loads async; wait briefly for window.google
+            for (let i = 0; i < 40 && !(window.google && google.accounts && google.accounts.id); i++) {
+                await new Promise(r => setTimeout(r, 100));
+            }
+            if (!(window.google && google.accounts && google.accounts.id)) return;
+
+            google.accounts.id.initialize({ client_id: cfg.googleClientId, callback: onGoogleCredential });
+            const btnEl = document.getElementById('googleBtn');
+            if (btnEl) google.accounts.id.renderButton(btnEl, { theme: 'outline', size: 'large', width: 300, text: 'continue_with' });
+            const section = document.getElementById('googleSection');
+            if (section) section.style.display = 'block';
+        }
+
+        async function onGoogleCredential(response) {
+            const errEl = document.getElementById('googleError');
+            if (errEl) errEl.textContent = '';
+            try {
+                const data = await apiCall('POST', '/auth/google', { credential: response.credential });
+                if (!data) return;
+                setTokens(data.accessToken, data.refreshToken);
+                currentUser = data.user;
+                window.canManageAccess = !!data.canManageAccess;
+                hideAuthModal();
+                updateUserDisplay();
+                await loadFromAPI();
+                showNotification(`✅ Welcome, ${data.user.name}!`);
+            } catch (err) {
+                if (errEl) errEl.textContent = err.message;
+            }
+        }
+
+        // ========================================
+        // MANAGE ACCESS (owner-only allowlist)
+        // ========================================
+
+        async function showManageAccess() {
+            document.getElementById('maError').textContent = '';
+            document.getElementById('maEmailInput').value = '';
+            document.getElementById('manageAccessModal').style.display = 'flex';
+            await renderAllowlist();
+        }
+
+        function hideManageAccess() {
+            document.getElementById('manageAccessModal').style.display = 'none';
+        }
+
+        async function renderAllowlist() {
+            const list = document.getElementById('maList');
+            list.innerHTML = '<div style="color:#999; font-size:13px;">Loading…</div>';
+            try {
+                const entries = await apiCall('GET', '/access/allowlist') || [];
+                if (entries.length === 0) {
+                    list.innerHTML = '<div style="color:#999; font-size:13px;">No one authorized yet. Add an email above.</div>';
+                    return;
+                }
+                list.innerHTML = entries.map(e => {
+                    const safe = e.email.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+                    const attr = e.email.replace(/\\/g,'\\\\').replace(/'/g,"\\'");
+                    const tag = e.hasAccount
+                        ? '<span class="ma-tag">active</span>'
+                        : '<span class="ma-tag pending">invited</span>';
+                    return `<div class="ma-row">
+                        <span class="ma-email">${safe}</span>${tag}
+                        <button class="ma-remove" onclick="removeAuthorizedEmail('${attr}')">Remove</button>
+                    </div>`;
+                }).join('');
+            } catch (err) {
+                list.innerHTML = `<div class="auth-error">${err.message}</div>`;
+            }
+        }
+
+        async function addAuthorizedEmail() {
+            const input = document.getElementById('maEmailInput');
+            const errEl = document.getElementById('maError');
+            errEl.textContent = '';
+            const email = input.value.trim();
+            if (!email) { errEl.textContent = 'Enter an email address'; return; }
+            try {
+                await apiCall('POST', '/access/allowlist', { email });
+                input.value = '';
+                showNotification(`✅ Authorized ${email}`);
+                await renderAllowlist();
+            } catch (err) { errEl.textContent = err.message; }
+        }
+
+        async function removeAuthorizedEmail(email) {
+            if (!confirm(`Revoke access for ${email}? They will lose access to the board.`)) return;
+            try {
+                await apiCall('DELETE', `/access/allowlist/${encodeURIComponent(email)}`);
+                showNotification(`✅ Revoked ${email}`);
+                await renderAllowlist();
+            } catch (err) { document.getElementById('maError').textContent = err.message; }
         }
 
         // ========================================
@@ -5127,6 +5325,8 @@
         // ========================================
 
         (async function init() {
+            initGoogle(); // sets up the Google button (no-op until configured); safe regardless of auth
+
             const sharedLinkLoaded = checkSharedLink();
             if (sharedLinkLoaded) { renderAll(); return; }
 
@@ -5135,6 +5335,7 @@
                     const me = await apiCall('GET', '/auth/me');
                     if (me) {
                         currentUser = me;
+                        window.canManageAccess = !!me.canManageAccess;
                         updateUserDisplay();
                         await loadFromAPI();
                         return;
