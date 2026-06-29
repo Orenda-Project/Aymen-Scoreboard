@@ -25,7 +25,14 @@ app.set('trust proxy', 1);
 // ─── Security headers ─────────────────────────────────────────────────────────
 // CSP disabled: the UI (DEMO.html) is a single-file app with inline scripts,
 // which helmet's default script-src 'self' policy would block.
-app.use(helmet({ contentSecurityPolicy: false }));
+// COOP set to 'same-origin-allow-popups' so the Google Sign-In popup can
+// deliver its credential back to the opener (the default 'same-origin' breaks it).
+app.use(
+  helmet({
+    contentSecurityPolicy: false,
+    crossOriginOpenerPolicy: { policy: 'same-origin-allow-popups' },
+  })
+);
 
 // ─── CORS ─────────────────────────────────────────────────────────────────────
 const allowedOrigins = [
